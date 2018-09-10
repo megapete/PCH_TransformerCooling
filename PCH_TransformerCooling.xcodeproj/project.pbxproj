@@ -10,6 +10,7 @@
 		D3826AA721471F3700579344 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3826AA621471F3700579344 /* AppDelegate.swift */; };
 		D3826AA921471F5300579344 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D3826AA821471F5300579344 /* Assets.xcassets */; };
 		D3826AAC21471F5400579344 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = D3826AAA21471F5400579344 /* MainMenu.xib */; };
+		D3826AB721471FE400579344 /* BluebookThermalFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D3826AB521471FE400579344 /* BluebookThermalFunctions.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,9 @@
 		D3826AAB21471F5400579344 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		D3826AAD21471F5400579344 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D3826AAE21471F5400579344 /* PCH_TransformerCooling.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PCH_TransformerCooling.entitlements; sourceTree = "<group>"; };
+		D3826AB421471FE400579344 /* PCH_TransformerCooling-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PCH_TransformerCooling-Bridging-Header.h"; sourceTree = "<group>"; };
+		D3826AB521471FE400579344 /* BluebookThermalFunctions.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = BluebookThermalFunctions.c; sourceTree = "<group>"; };
+		D3826AB621471FE400579344 /* BluebookThermalFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BluebookThermalFunctions.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,10 +56,13 @@
 			isa = PBXGroup;
 			children = (
 				D3826AA621471F3700579344 /* AppDelegate.swift */,
+				D3826AB521471FE400579344 /* BluebookThermalFunctions.c */,
+				D3826AB621471FE400579344 /* BluebookThermalFunctions.h */,
 				D3826AA821471F5300579344 /* Assets.xcassets */,
 				D3826AAA21471F5400579344 /* MainMenu.xib */,
 				D3826AAD21471F5400579344 /* Info.plist */,
 				D3826AAE21471F5400579344 /* PCH_TransformerCooling.entitlements */,
+				D3826AB421471FE400579344 /* PCH_TransformerCooling-Bridging-Header.h */,
 			);
 			path = PCH_TransformerCooling;
 			sourceTree = "<group>";
@@ -92,6 +99,7 @@
 				TargetAttributes = {
 					D3826AA221471F3700579344 = {
 						CreatedOnToolsVersion = 9.4.1;
+						LastSwiftMigration = 0940;
 					};
 				};
 			};
@@ -130,6 +138,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3826AB721471FE400579344 /* BluebookThermalFunctions.c in Sources */,
 				D3826AA721471F3700579344 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -265,6 +274,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = PCH_TransformerCooling/PCH_TransformerCooling.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -275,6 +285,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.huberis-tech.PCH-TransformerCooling";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "PCH_TransformerCooling/PCH_TransformerCooling-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
@@ -283,6 +295,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = PCH_TransformerCooling/PCH_TransformerCooling.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -293,6 +306,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.huberis-tech.PCH-TransformerCooling";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "PCH_TransformerCooling/PCH_TransformerCooling-Bridging-Header.h";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Release;
