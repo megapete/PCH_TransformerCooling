@@ -81,6 +81,32 @@ double InitialOilVelocity(double coilLoss, double inletArea, double deltaT)
     return coilLoss / (p * c * inletArea * deltaT);
 }
 
+/// Prandtl number (BB2E, p514)
+double PrandtlNumber(double fViscosity, double fSpecificHeat, double fThermalConductivity)
+{
+    return fViscosity * fSpecificHeat / fThermalConductivity;
+}
+
+/// Convection heat transfer coefficient (BB2E, p514, eq:15.23)
+double ConvectionCoefficient(double hydraulicDiameter, double pathLength, double bulkOilTemp, double gradient, double fVelocity)
+{
+    double p = FLUID_DENSITY_OF_OIL;
+    double k = THERMAL_CONDUCTIVITY_OF_OIL;
+    double c = SPECIFIC_HEAT_OF_OIL;
+    double muBulk = OilViscosity(bulkOilTemp);
+    double muSurface = OilViscosity(bulkOilTemp + gradient);
+    
+    double Re = ReynoldsNumber(p, fVelocity, hydraulicDiameter, muBulk);
+    double Pr = PrandtlNumber(muBulk, c, k);
+    
+    return 1.86 * k / hydraulicDiameter * pow(Re * Pr * hydraulicDiameter / pathLength, 0.33) * pow(muBulk / muSurface, 0.14);
+}
+
+/// The surface heat transfer coefficient (BB2E, p514, eq:15.22)
+double HeatTransferCoefficient(double hConv, double tInsul, double kInsul)
+{
+    return hConv / (1.0 + hConv * tInsul / kInsul);
+}
 
 
 

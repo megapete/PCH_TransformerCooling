@@ -45,5 +45,14 @@ double OilViscosity(double tempInC);
 /// Initial oil velocity v0 using the given losses (BB2E, p513, eq:15.17)
 double InitialOilVelocity(double coilLoss, double inletArea, double deltaT);
 
+/// Prandtl number (BB2E, p514)
+double PrandtlNumber(double fViscosity, double fSpecificHeat, double fThermalConductivity);
+
+/// Convection heat transfer coefficient (BB2E, p514, eq:15.23)
+double ConvectionCoefficient(double hydraulicDiameter, double pathLength, double bulkOilTemp, double gradient, double fVelocity);
+
+/// The surface heat transfer coefficient (BB2E, p514, eq:15.22)
+double HeatTransferCoefficient(double hConv, double tInsul, double kInsul);
+
 
 #endif /* BluebookThermalFunctions_h */

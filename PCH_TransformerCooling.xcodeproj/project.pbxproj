@@ -11,6 +11,12 @@
 		D3826AA921471F5300579344 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D3826AA821471F5300579344 /* Assets.xcassets */; };
 		D3826AAC21471F5400579344 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = D3826AAA21471F5400579344 /* MainMenu.xib */; };
 		D3826AB721471FE400579344 /* BluebookThermalFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = D3826AB521471FE400579344 /* BluebookThermalFunctions.c */; };
+		D3EB797E214823F100081FC4 /* CoilModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB797D214823F100081FC4 /* CoilModel.swift */; };
+		D3EB79802148242E00081FC4 /* SparseMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB797F2148242E00081FC4 /* SparseMatrix.swift */; };
+		D3EB79832148247A00081FC4 /* GlobalDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB79812148247A00081FC4 /* GlobalDefs.swift */; };
+		D3EB79842148247A00081FC4 /* PCH_Defs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB79822148247A00081FC4 /* PCH_Defs.swift */; };
+		D3EB7986214827C900081FC4 /* SectionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB7985214827C900081FC4 /* SectionModel.swift */; };
+		D3EB798821482B9200081FC4 /* DiscModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EB798721482B9200081FC4 /* DiscModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +29,12 @@
 		D3826AB421471FE400579344 /* PCH_TransformerCooling-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PCH_TransformerCooling-Bridging-Header.h"; sourceTree = "<group>"; };
 		D3826AB521471FE400579344 /* BluebookThermalFunctions.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = BluebookThermalFunctions.c; sourceTree = "<group>"; };
 		D3826AB621471FE400579344 /* BluebookThermalFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BluebookThermalFunctions.h; sourceTree = "<group>"; };
+		D3EB797D214823F100081FC4 /* CoilModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoilModel.swift; sourceTree = "<group>"; };
+		D3EB797F2148242E00081FC4 /* SparseMatrix.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SparseMatrix.swift; path = ../../../../Documents/MyProjects/PCH_SparseMatrix/PCH_SparseMatrix/SparseMatrix.swift; sourceTree = "<group>"; };
+		D3EB79812148247A00081FC4 /* GlobalDefs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GlobalDefs.swift; path = ../../../../Dropbox/MyProjects/GlobalDefs.swift; sourceTree = "<group>"; };
+		D3EB79822148247A00081FC4 /* PCH_Defs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PCH_Defs.swift; path = ../../../../Dropbox/MyProjects/PCH_Defs.swift; sourceTree = "<group>"; };
+		D3EB7985214827C900081FC4 /* SectionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionModel.swift; sourceTree = "<group>"; };
+		D3EB798721482B9200081FC4 /* DiscModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +68,12 @@
 			isa = PBXGroup;
 			children = (
 				D3826AA621471F3700579344 /* AppDelegate.swift */,
+				D3EB797D214823F100081FC4 /* CoilModel.swift */,
+				D3EB7985214827C900081FC4 /* SectionModel.swift */,
+				D3EB798721482B9200081FC4 /* DiscModel.swift */,
+				D3EB797F2148242E00081FC4 /* SparseMatrix.swift */,
+				D3EB79812148247A00081FC4 /* GlobalDefs.swift */,
+				D3EB79822148247A00081FC4 /* PCH_Defs.swift */,
 				D3826AB521471FE400579344 /* BluebookThermalFunctions.c */,
 				D3826AB621471FE400579344 /* BluebookThermalFunctions.h */,
 				D3826AA821471F5300579344 /* Assets.xcassets */,
@@ -138,7 +156,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3EB79802148242E00081FC4 /* SparseMatrix.swift in Sources */,
 				D3826AB721471FE400579344 /* BluebookThermalFunctions.c in Sources */,
+				D3EB797E214823F100081FC4 /* CoilModel.swift in Sources */,
+				D3EB79842148247A00081FC4 /* PCH_Defs.swift in Sources */,
+				D3EB79832148247A00081FC4 /* GlobalDefs.swift in Sources */,
+				D3EB7986214827C900081FC4 /* SectionModel.swift in Sources */,
+				D3EB798821482B9200081FC4 /* DiscModel.swift in Sources */,
 				D3826AA721471F3700579344 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
