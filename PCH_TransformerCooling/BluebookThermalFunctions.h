@@ -14,6 +14,10 @@
 #include <math.h>
 #include <stdbool.h>
 
+#define SPECIFIC_HEAT_OF_OIL        1880.0  // J/kg
+#define FLUID_DENSITY_OF_OIL        867.0   // kg/m3
+#define THERMAL_CONDUCTIVITY_OF_OIL 0.11    // W/mC
+
 /// General function to calculate hydraulic diameter for an arbitrary shape, given the cross-secitonal area and the wetted perimeter
 double HydraulicDiameter(double xSect, double wPerimeter);
 
@@ -37,6 +41,9 @@ double PressureChangeInCoil(double fDensity, double coilHt, double deltaT);
 
 /// Oil viscosity (BB2E, p511, eq:15.6)
 double OilViscosity(double tempInC);
+
+/// Initial oil velocity v0 using the given losses (BB2E, p513, eq:15.17)
+double InitialOilVelocity(double coilLoss, double inletArea, double deltaT);
 
 
 #endif /* BluebookThermalFunctions_h */

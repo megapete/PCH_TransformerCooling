@@ -72,6 +72,15 @@ double OilViscosity(double tempInC)
     return 6900.0 / cubedValue;
 }
 
+/// Initial oil velocity v0 using the given losses (BB2E, p513, eq:15.17)
+double InitialOilVelocity(double coilLoss, double inletArea, double deltaT)
+{
+    double p = FLUID_DENSITY_OF_OIL;
+    double c = SPECIFIC_HEAT_OF_OIL;
+    
+    return coilLoss / (p * c * inletArea * deltaT);
+}
+
 
 
 
