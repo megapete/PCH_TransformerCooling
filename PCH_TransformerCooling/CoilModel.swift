@@ -34,4 +34,25 @@ class CoilModel: NSObject {
         self.stickWidth = stickWidth
         self.sections = sections
     }
+    
+    /// Convenience routine to quickly create coils by copying a given section. For directed-flow coils, the calling program can specify whether the inlet locations should alternate from section to section. Section 0 is considered to be the bottom-most section.
+    static func CreateSections(numSections:Int, baseSect:SectionModel, alternateInlets:Bool = true) -> [SectionModel]
+    {
+        let result = [SectionModel](repeating: baseSect, count: numSections)
+        
+        if alternateInlets && baseSect.inletLoc != .both
+        {
+            let newInletLoc:SectionModel.InletLocation = (baseSect.inletLoc == .inner ? .outer : .inner)
+            
+            var index = 1;
+            while index < result.count
+            {
+                result[index].inletLoc = newInletLoc
+                
+                index += 2
+            }
+        }
+        
+        return result
+    }
 }
