@@ -41,6 +41,9 @@ class DiscModel: NSObject {
     let kAbove:Double
     let kBelow:Double
     
+    let verticalPathLength:Double
+    let horizontalPathLength:Double
+    
     // Things that need to be calculated every time through
     var temperature:Double = 20.0
     // var loss:Double = 0.0
@@ -55,6 +58,8 @@ class DiscModel: NSObject {
         self.dims.rb = radialBuild
         self.dims.h = height
         self.paperCover = paperThickness
+        self.verticalPathLength = height + (belowGap + aboveGap) / 2.0
+        self.horizontalPathLength = radialBuild + (innerGap + outerGap) / 2.0
         // self.belowGap = belowGap
         // self.aboveGap = aboveGap
         self.resistance20 = resistanceAt20C
@@ -96,6 +101,8 @@ class DiscModel: NSObject {
         self.Ainner = innerDiameter * π * innerSpaceFactor * height
         self.Aouter = (innerDiameter + 2.0 * radialBuild) * π * outerSpaceFactor * height
     }
+    
+    
     
     func Loss(amps:Double) -> Double
     {

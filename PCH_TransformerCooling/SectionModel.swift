@@ -105,8 +105,8 @@ class SectionModel: NSObject {
         let n = self.discs.count
         let dimension = 5 * discs.count + 4
         
-        var B = [Double](repeating: 0.0, count: dimension
-        )
+        var B = [Double](repeating: 0.0, count: dimension)
+        
         // We define columns 1(index 0) through 2n+2 (index 2n+1) to be P1 through P2n+2.
         // Column 2n+3 (index 2n+2) through 5n+4 (index 5n+3) are used for velocities (v1 to v3n+2)
         
@@ -114,13 +114,29 @@ class SectionModel: NSObject {
         let pOffset = -1
         let vOffset = 2 * n + 1
         
-        var currentDiscIndex = 0
-        var currentDisc = self.discs[currentDiscIndex]
+        var currentDisc = self.discs[0]
         
-        // Initialize p1
+        // Initialize p1 (using pIn as P0 and vIn as v0)
         var rowIndex = pOffset + 1
         pvm[rowIndex, rowIndex] = 1.0
-        // B[rowIndex] = PressureChangeUsingKandD(currentDisc.kInner, currentDisc.Dinner, <#T##fViscosity: Double##Double#>, <#T##pathLength: Double##Double#>, <#T##fVelocity: Double##Double#>)
+        B[rowIndex] = pIn - PressureChangeUsingKandD(currentDisc.kInner, currentDisc.Dinner, OilViscosity(self.NodeTemps[0]), currentDisc.verticalPathLength, vIn)
+        
+        for i in 1..<n
+        {
+            // solve for P(2i-1) - P(2i) and stuff it into row 2i
+            rowIndex = pOffset + 2*i
+            
+            pvm[rowIndex, pOffset + 2*i] = -1.0
+            pvm[rowIndex, pOffset + 2*i-1] = 1.0
+            
+            // v(3i-1) is unknown, so we pass 1 as the velocity in the call to PressureChangeUsing... which will yield the required coefficient
+            var vCoeff = PressureChangeUsingKandD(currentDisc.kBelow, currentDisc.Dbelow, OilViscosity((self.NodeTemps[2*i] + self.NodeTemps[2*i-1]) / 2.0), currentDisc.horizontalPathLength, 1.0)
+            // the velocity moves from the right side of the equation to the left, so we take the negative of the coefficient
+            pvm[rowIndex, vOffset + 3*i-1] = -vCoeff
+            
+            // advance to the next disc in the section
+            currentDisc = self.discs[i]
+        }
         
         return true
     }
