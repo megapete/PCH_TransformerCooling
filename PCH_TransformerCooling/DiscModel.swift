@@ -36,6 +36,11 @@ class DiscModel: NSObject {
     let Aabove:Double
     let Abelow:Double
     
+    let kInner:Double
+    let kOuter:Double
+    let kAbove:Double
+    let kBelow:Double
+    
     // Things that need to be calculated every time through
     var temperature:Double = 20.0
     // var loss:Double = 0.0
@@ -44,7 +49,7 @@ class DiscModel: NSObject {
     var hAbove:Double = 0.0
     var hBelow:Double = 0.0
 
-    init(innerDiameter:Double, radialBuild:Double, height:Double, paperThickness:Double, belowGap:Double, aboveGap:Double, resistanceAt20C:Double, eddyPU:Double, aboveSpaceFactor:Double, belowSpaceFactor:Double, innerSpaceFactor:Double, outerSpaceFactor:Double, innerGap:Double, outerGap:Double)
+    init(innerDiameter:Double, radialBuild:Double, height:Double, paperThickness:Double, belowGap:Double, aboveGap:Double, numColumns:Int, resistanceAt20C:Double, eddyPU:Double, aboveSpaceFactor:Double, belowSpaceFactor:Double, innerSpaceFactor:Double, outerSpaceFactor:Double, innerGap:Double, outerGap:Double, innerSticks:Int, outerSticks:Int)
     {
         self.dims.ID = innerDiameter
         self.dims.rb = radialBuild
@@ -60,10 +65,10 @@ class DiscModel: NSObject {
         // calculate and store the hydraulic diameters for the horizontal ducts
         let lmt = (innerDiameter + radialBuild) * π
         var area = lmt * belowSpaceFactor * belowGap
-        var wettedP = (lmt * belowSpaceFactor + belowGap) * 2.0
+        var wettedP = (lmt * belowSpaceFactor + belowGap * Double(numColumns)) * 2.0
         self.Dbelow = HydraulicDiameter(area, wettedP)
         area = lmt * aboveSpaceFactor * aboveGap
-        wettedP = (lmt * aboveSpaceFactor + aboveGap) * 2.0
+        wettedP = (lmt * aboveSpaceFactor + aboveGap * Double(numColumns)) * 2.0
         self.Dabove = HydraulicDiameter(area, wettedP)
         
         self.Aabove = lmt * radialBuild * aboveSpaceFactor
@@ -72,12 +77,21 @@ class DiscModel: NSObject {
         // calculate and store the hydraulic diameters for the vertical ducts
         let lit = (innerDiameter - innerGap) * π
         area = lit * innerSpaceFactor * innerGap
-        wettedP = (lit * innerSpaceFactor + innerGap) * 2.0
+        wettedP = (lit * innerSpaceFactor + innerGap * Double(innerSticks)) * 2.0
         self.Dinner = HydraulicDiameter(area, wettedP)
+        
         let lot = (innerDiameter + 2.0 * radialBuild + outerGap) * π
         area = lot * outerSpaceFactor * outerGap
-        wettedP = (lot * outerSpaceFactor + outerGap) * 2.0
+        wettedP = (lot * outerSpaceFactor + outerGap * Double(outerSticks)) * 2.0
         self.Douter = HydraulicDiameter(area, wettedP)
+        
+        // calculate the kFactor for inner and outer ducts
+        self.kInner = K(innerGap, lit * innerSpaceFactor / Double(innerSticks));
+        self.kOuter = K(outerGap, lot * outerSpaceFactor / Double(outerSticks));
+        
+        // kFactor for above and below
+        self.kAbove = K(aboveGap, lmt * aboveSpaceFactor / Double(numColumns));
+        self.kBelow = K(belowGap, lmt * belowSpaceFactor / Double(numColumns));
         
         self.Ainner = innerDiameter * π * innerSpaceFactor * height
         self.Aouter = (innerDiameter + 2.0 * radialBuild) * π * outerSpaceFactor * height

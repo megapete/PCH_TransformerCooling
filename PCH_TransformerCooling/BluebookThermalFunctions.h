@@ -37,8 +37,14 @@ double FrictionCoefficientRectangularDuct(double w, double h, double reynoldsNum
 /// Pressure change in a rectangular duct from point 1 to point 2 (BB2E, p510, eq:15.5)
 double PressureChangeRectangularDuct(double w, double h, double fViscosity, double pathLength, double fVelocity);
 
+/// Alternate method of calculating pressure change, taking K and D as parameters
+double PressureChangeUsingKandD(double K, double D, double fViscosity, double pathLength, double fVelocity);
+
 /// Pressure change in a coil (used to come up with the pressure at the bottom of the coil - BB2E, p513, eq:15.16) as caused by the temperature difference between the top and bottom.
 double PressureChangeInCoil(double fDensity, double coilHt, double deltaT);
+
+/// Calculate K(a,b) (BB2E, p511, eq:15.4
+double K(double a, double b);
 
 /// Oil viscosity (BB2E, p511, eq:15.6)
 double OilViscosity(double tempInC);

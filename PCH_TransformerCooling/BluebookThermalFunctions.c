@@ -38,9 +38,18 @@ double FrictionCoefficientRectangularDuct(double w, double h, double reynoldsNum
     double a = (w < h ? w : h);
     double b = (w < h ? h : w);
     
-    double K = 56.91 + 40.31 * (exp(-3.5 * a / b) - 0.0302); // f:15.4
+    //double K = 56.91 + 40.31 * (exp(-3.5 * a / b) - 0.0302); // f:15.4
     
-    return K / reynoldsNumber;
+    return K(a, b) / reynoldsNumber;
+}
+
+/// Calculate K(a,b) (BB2E, p511, eq:15.4
+double K(double a, double b)
+{
+    double aUse = (a < b ? a : b);
+    double bUse = (a < b ? b : a);
+    
+    return 56.91 + 40.31 * (exp(-3.5 * aUse / bUse) - 0.0302);
 }
 
 /// Pressure change in a rectangular duct from point 1 to point 2 (BB2E, p510, f:15.5)
@@ -49,9 +58,15 @@ double PressureChangeRectangularDuct(double w, double h, double fViscosity, doub
     double a = (w < h ? w : h);
     double b = (w < h ? h : w);
     
-    double K = 56.91 + 40.31 * (exp(-3.5 * a / b) - 0.0302); // f:15.4
+    // double K = 56.91 + 40.31 * (exp(-3.5 * a / b) - 0.0302); // f:15.4
     double D = HydraulicDiameterOfRect(w, h);
     
+    return 0.5 * fViscosity * K(a, b) * pathLength * fVelocity / (D * D);
+}
+
+/// Alternate method of calculating pressure change, taking K and D as parameters
+double PressureChangeUsingKandD(double K, double D, double fViscosity, double pathLength, double fVelocity)
+{
     return 0.5 * fViscosity * K * pathLength * fVelocity / (D * D);
 }
 
