@@ -73,8 +73,8 @@ double PressureChangeUsingKandD(double K, double D, double fViscosity, double pa
 /// Pressure change in a coil (used to come up with the pressure at the bottom of the coil - BB2E, p513, eq:15.16) as caused by the temperature difference between the top and bottom.
 double PressureChangeInCoil(double fDensity, double coilHt, double deltaT)
 {
-    double B = 6.8E-4;
-    double g = 9.80665;
+    double B = VOLUME_COEFFICIENT_OF_THERMAL_EXPANSION_OF_OIL;
+    double g = ACCELERATION_DUE_TO_GRAVITY;
     
     return B * fDensity * g * coilHt * deltaT;
 }

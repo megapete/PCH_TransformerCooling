@@ -21,10 +21,16 @@ class CoilModel: NSObject {
     
     let coilID:Double
     
+    let amps:Double
+    
+    var p0:Double = 0.0
+    var v0:Double = 0.0
+    
     var sections:[SectionModel] = []
     
-    init(coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [])
+    init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [])
     {
+        self.amps = amps
         self.coilID = coilID
         self.usesOilFlowWashers = usesOilFlowWashers
         self.innerDuctDimn = innerDuctDimn
@@ -33,6 +39,61 @@ class CoilModel: NSObject {
         self.numOuterSticks = numOuterSticks
         self.stickWidth = stickWidth
         self.sections = sections
+    }
+    
+    func InitializeInputParameters(deltaT:Double)
+    {
+        guard sections.count > 0 else
+        {
+            DLog("No sections have been defined")
+            
+            return
+        }
+        
+        guard self.sections[0].inletLoc != .both else
+        {
+            DLog("Non-directed flow is not yet implemented")
+            return
+        }
+        
+        guard self.sections[0].discs.count != 0 else
+        {
+            DLog("No discs have been defined")
+            return
+        }
+        
+        let bottomMostDisc = self.sections[0].discs[0]
+        
+        let inletArea = (self.sections[0].inletLoc == .inner ? bottomMostDisc.Ainner : bottomMostDisc.Aouter)
+        
+        self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), deltaT)
+        self.v0 = InitialOilVelocity(self.Loss(), inletArea, deltaT)
+    }
+    
+    /// Get the overall loss of the coil
+    func Loss() -> Double
+    {
+        var result = 0.0
+        
+        for nextSection in self.sections
+        {
+            result += nextSection.TotalLoss(amps: self.amps)
+        }
+        
+        return result
+    }
+    
+    /// Get the overall height of the coil
+    func Height() -> Double
+    {
+        var result = 0.0
+        
+        for nextSection in self.sections
+        {
+            result += nextSection.Height()
+        }
+        
+        return result
     }
     
     /// Convenience routine to quickly create coils by copying a given section. For directed-flow coils, the calling program can specify whether the inlet locations should alternate from section to section. Section 0 is considered to be the bottom-most section.

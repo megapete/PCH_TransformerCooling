@@ -14,10 +14,12 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define SPECIFIC_HEAT_OF_OIL            1880.0  // J/kg
-#define FLUID_DENSITY_OF_OIL            867.0   // kg/m3
-#define THERMAL_CONDUCTIVITY_OF_OIL     0.11    // W/mC
-#define THERMAL_CONDUCTIVITY_OF_PAPER   0.16
+#define SPECIFIC_HEAT_OF_OIL                            1880.0  // J/kg
+#define FLUID_DENSITY_OF_OIL                            867.0   // kg/m3
+#define THERMAL_CONDUCTIVITY_OF_OIL                     0.11    // W/m•C
+#define THERMAL_CONDUCTIVITY_OF_PAPER                   0.16    // W/m•C
+#define VOLUME_COEFFICIENT_OF_THERMAL_EXPANSION_OF_OIL  6.8E-4  // per degree K
+#define ACCELERATION_DUE_TO_GRAVITY                     9.80665 // m/s2
 
 /// General function to calculate hydraulic diameter for an arbitrary shape, given the cross-secitonal area and the wetted perimeter
 double HydraulicDiameter(double xSect, double wPerimeter);

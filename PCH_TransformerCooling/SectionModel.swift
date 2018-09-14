@@ -45,6 +45,39 @@ class SectionModel: NSObject {
         return result;
     }
     
+    /// The total loss of the discs in the section at the given amps with the current;y stored disc temperatures
+    func TotalLoss(amps:Double) -> Double
+    {
+        var result:Double = 0.0
+        
+        for nextDisc in self.discs
+        {
+            result += nextDisc.Loss(amps: amps)
+        }
+        
+        return result
+    }
+    
+    /// The overall height of the section
+    func Height() -> Double
+    {
+        guard self.discs.count > 0 else
+        {
+            return 0.0
+        }
+        
+        var result = 0.0
+        
+        for nextDisc in self.discs
+        {
+            result += (nextDisc.belowGap + nextDisc.dims.h)
+        }
+        
+        result += self.discs.last!.aboveGap
+        
+        return result
+    }
+    
     /// Initialize the node temperature array, with tIn as the inlet temp and deltaT as the rise through the section
     func InitializeNodeTemps(tIn:Double, deltaT:Double)
     {
@@ -90,6 +123,7 @@ class SectionModel: NSObject {
         return self.SetupAndSolvePVMatrix(pIn: &pIn, vIn: &vIn)
     }
     
+    /// Update the coefficients and solve the PV matrix system
     func SetupAndSolvePVMatrix(pIn: inout Double, vIn: inout Double) -> Bool
     {
         guard let pvm = self.PVMatrix else
@@ -102,6 +136,12 @@ class SectionModel: NSObject {
         {
             DLog("No discs have been defined! Aborting!")
             return false
+        }
+        
+        // if the matrix has been used before, clear its entries
+        if pvm.NumEntries() > 0
+        {
+            pvm.ClearEntries()
         }
         
         let n = self.discs.count
