@@ -23,6 +23,7 @@ class SectionModel: NSObject {
     let blockWidth:Double
     
     var PVMatrix:PCH_SparseMatrix? = nil
+    var Tmatrix:PCH_SparseMatrix? = nil
     var nodeTemps:[Double] = []
     var nodePressures:[Double] = []
     var pathVelocities:[Double] = []
@@ -93,12 +94,33 @@ class SectionModel: NSObject {
         
         self.nodeTemps = [Double](repeating: tIn, count: 2 * numDiscs + 3)
         
-        for i in 0...numDiscs + 1
+        for i in 1...numDiscs + 1
         {
             nTemp += deltaTperDisc
             self.nodeTemps[2*i-1] = nTemp
             self.nodeTemps[2*i] = nTemp + 0.5 * deltaTperDisc
         }
+    }
+    
+    /// Create and populate a sparse matrix to calculate the node temperatures. If the matrix was created then solve it, otheriwse return false. If no discs have been modeled, the routine does nothing and returns false.
+    func CreateAndSolveTmatrix(amps:Double, tIn: inout Double) -> Bool
+    {
+        if self.Tmatrix != nil
+        {
+            DLog("T matrix already exists - overwriting!")
+        }
+        
+        guard self.discs.count > 0 else
+        {
+            DLog("No discs have been defined! Aborting!")
+            return false
+        }
+        
+        // per BB2E p515, we only need 3n+1 delta-T equations plus 2n+2 energy balance equations
+        let dimension = 5 * discs.count + 3
+        
+        
+        return true
     }
     
     
