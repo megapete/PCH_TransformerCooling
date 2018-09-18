@@ -119,6 +119,90 @@ class SectionModel: NSObject {
         // per BB2E p515, we only need 3n+1 delta-T equations plus 2n+2 energy balance equations
         let dimension = 5 * discs.count + 3
         
+        self.Tmatrix = PCH_SparseMatrix(type: .double, rows: dimension, cols: dimension)
+        
+        return self.SetupAndSolveTmatrix(amps: amps, tIn: &tIn)
+    }
+    
+    func SetupAndSolveTmatrix(amps:Double, tIn: inout Double) -> Bool
+    {
+        self.nodeTemps[0] = tIn
+        
+        let n = self.discs.count
+        let dimension = 5 * n + 3
+        
+        var old_tOut = 0.0
+        var tOut = self.nodeTemps[2*n+2]
+        
+        guard let T = self.Tmatrix else
+        {
+            DLog("Temperature matrix was not created - aborting!")
+            return false
+        }
+        
+        repeat {
+            
+            old_tOut = tOut
+            
+            // update all the disc temperatures using the current surrounding node temps, path velocities, and amps through the disc
+            for i in 1...n
+            {
+                self.discs[i-1].UpdateTemperature(amps: amps, T1: self.nodeTemps[2*i-1], T2: self.nodeTemps[2*i], T3: self.nodeTemps[2*i+1], T4: self.nodeTemps[2*i+2], v12: self.pathVelocities[3*i-1], v34: self.pathVelocities[3*i+2], v13: self.pathVelocities[3*i+1], v24: self.pathVelocities[3*i])
+            }
+            
+            // constant that turns up a lot
+            let cp = SPECIFIC_HEAT_OF_OIL * FLUID_DENSITY_OF_OIL
+            
+            var B = [Double](repeating: 0.0, count: dimension)
+            
+            T.ClearEntries()
+            
+            // We'll adopt the numbering system that I used in the old program
+            let nodalToffset = -1
+            let deltaToffset = 2 * n
+            
+            var TciPrev = 0.0
+            
+            // Do all the horizontal delta-T's under the discs
+            for i in 1..<n
+            {
+                let currentDisc = self.discs[i-1]
+                
+                // put this equation into the 3i-1 row
+                let rowIndex = deltaToffset + 3*i-1
+                
+                let Tci = currentDisc.temperature
+                
+                let h = currentDisc.hBelow
+                let Ac0 = currentDisc.AcBelow
+                let A0i = currentDisc.Abelow
+                
+                B[rowIndex] = h * Ac0 * (Tci + TciPrev)
+                
+                let multFactor = (i == 1 ? 0.5 : 1.0)
+                
+                T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*i-1] + h * Ac0 * multFactor
+                T[rowIndex, nodalToffset + 2*i-1] = h * Ac0 / multFactor
+                
+                TciPrev = Tci
+            }
+            
+            // Now the horizontal duct above the final disc
+            let currentDisc = self.discs[n-1]
+            var rowIndex = deltaToffset + 3*n+2
+            let Tci = currentDisc.temperature
+            let h = currentDisc.hAbove
+            let Ac0 = currentDisc.AcAbove
+            let A0i = currentDisc.Aabove
+            
+            B[rowIndex] = h * Ac0 * Tci
+            
+            T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*n+2] + h * Ac0 * 0.5
+            
+            
+        } while fabs(old_tOut - tOut) > 0.1
+        
+        
         
         return true
     }

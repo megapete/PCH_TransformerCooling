@@ -121,7 +121,7 @@ class DiscModel: NSObject {
     }
     
     /// Update the temperature of the disc. The subscript numbers for the velocity (12, 34, etc) are the paths as referenced from disc 1. The subscripts for the temperatures are the nodes around disc 1.
-    func UpdateTemperature(amps:Double, T1:Double, T2:Double, T3:Double, T4:Double, v12:Double, v34:Double, v13:Double, v24:Double) -> Double
+    func UpdateTemperature(amps:Double, T1:Double, T2:Double, T3:Double, T4:Double, v12:Double, v34:Double, v13:Double, v24:Double) //-> Double
     {
         var oldTemp = self.temperature
         
@@ -153,7 +153,7 @@ class DiscModel: NSObject {
         
         } while fabs(self.temperature - oldTemp) > 0.1
         
-        return self.temperature
+        // return self.temperature
         
     }
 }
