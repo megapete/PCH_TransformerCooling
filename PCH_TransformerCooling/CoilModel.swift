@@ -26,6 +26,9 @@ class CoilModel: NSObject {
     var p0:Double = 0.0
     var v0:Double = 0.0
     
+    var tBottom = 20.0
+    var tTop = 21.0
+    
     var sections:[SectionModel] = []
     
     init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [])
@@ -41,7 +44,7 @@ class CoilModel: NSObject {
         self.sections = sections
     }
     
-    func InitializeInputParameters(deltaT:Double)
+    func InitializeInputParameters(tBottom:Double, tTop:Double)
     {
         guard sections.count > 0 else
         {
@@ -65,6 +68,19 @@ class CoilModel: NSObject {
         let bottomMostDisc = self.sections[0].discs[0]
         
         let inletArea = (self.sections[0].inletLoc == .inner ? bottomMostDisc.Ainner : bottomMostDisc.Aouter)
+        
+        var deltaT = tTop - tBottom
+        
+        if deltaT == 0.0
+        {
+            DLog("Top oil must be greater than bottom oil. Setting to a difference of 1.0")
+            deltaT = 1.0
+        }
+        else
+        {
+            self.tTop = tTop
+            self.tBottom = tBottom
+        }
         
         self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), deltaT)
         self.v0 = InitialOilVelocity(self.Loss(), inletArea, deltaT)

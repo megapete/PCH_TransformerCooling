@@ -161,48 +161,163 @@ class SectionModel: NSObject {
             let nodalToffset = -1
             let deltaToffset = 2 * n
             
-            var TciPrev = 0.0
+            // HORIZONTAL Ducts
             
-            // Do all the horizontal delta-T's under the discs
-            for i in 1..<n
+            // Do the duct under the first disc
+            var currentDisc = self.discs[0]
+            var rowIndex = deltaToffset + 2
+            var Tci = currentDisc.temperature
+            var hAc0 = currentDisc.hAbove * currentDisc.AcAbove
+            // var Ac0 = currentDisc.AcAbove
+            var A0i = currentDisc.Aabove
+            
+            B[rowIndex] = hAc0 * Tci
+            
+            T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[2] + hAc0 * 0.5
+            T[rowIndex, nodalToffset + 1] = hAc0
+            
+            var TciPrev = Tci
+            
+            // Do all the horizontal delta-T's under the discs in the main field
+            for i in 2..<n
             {
-                let currentDisc = self.discs[i-1]
+                currentDisc = self.discs[i-1]
                 
                 // put this equation into the 3i-1 row
-                let rowIndex = deltaToffset + 3*i-1
+                rowIndex = deltaToffset + 3*i-1
                 
-                let Tci = currentDisc.temperature
+                Tci = currentDisc.temperature
                 
-                let h = currentDisc.hBelow
-                let Ac0 = currentDisc.AcBelow
-                let A0i = currentDisc.Abelow
+                hAc0 = currentDisc.hAbove * currentDisc.AcAbove
+                A0i = currentDisc.Abelow
                 
-                B[rowIndex] = h * Ac0 * (Tci + TciPrev)
+                B[rowIndex] = hAc0 * (Tci + TciPrev)
                 
-                let multFactor = (i == 1 ? 0.5 : 1.0)
-                
-                T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*i-1] + h * Ac0 * multFactor
-                T[rowIndex, nodalToffset + 2*i-1] = h * Ac0 / multFactor
+                T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*i-1] + hAc0
+                T[rowIndex, nodalToffset + 2*i-1] = 2.0 * hAc0
                 
                 TciPrev = Tci
             }
             
             // Now the horizontal duct above the final disc
-            let currentDisc = self.discs[n-1]
-            var rowIndex = deltaToffset + 3*n+2
-            let Tci = currentDisc.temperature
-            let h = currentDisc.hAbove
-            let Ac0 = currentDisc.AcAbove
-            let A0i = currentDisc.Aabove
+            currentDisc = self.discs[n-1]
+            rowIndex = deltaToffset + 3*n+2
+            Tci = currentDisc.temperature
+            hAc0 = currentDisc.hAbove * currentDisc.AcAbove
+            A0i = currentDisc.Aabove
             
-            B[rowIndex] = h * Ac0 * Tci
+            B[rowIndex] = hAc0 * Tci
             
-            T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*n+2] + h * Ac0 * 0.5
+            T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*n+2] + hAc0 * 0.5
+            T[rowIndex, nodalToffset + 2*n+1] = hAc0
+            
+            // VERTICAL Ducts
+            
+            // Incoming temp
+            T[0,0] = 1.0
+            B[0] = self.nodeTemps[0]
+            
+            // Two ducts for each disc
+            for i in 1...n
+            {
+                currentDisc = self.discs[i-1]
+                Tci = currentDisc.temperature
+                
+                // variables depend on the inlet location. Default to inner
+                var hAc1 = currentDisc.hInner * currentDisc.AcInner
+                var hAc2 = currentDisc.hOuter * currentDisc.AcOuter
+                var A1 = currentDisc.Ainner
+                var A2 = currentDisc.Aouter
+                
+                if self.inletLoc == .outer
+                {
+                    let swap_hAc = hAc2
+                    hAc2 = hAc1
+                    hAc1 = swap_hAc
+                    let swap_A = A2
+                    A2 = A1
+                    A1 = swap_A
+                }
+                
+                // A1 duct
+                rowIndex = deltaToffset + 3*i+1
+                B[rowIndex] = hAc1 * Tci
+                T[rowIndex, rowIndex] = cp * A1 * self.pathVelocities[3*i+1] + hAc1 * 0.5
+                T[rowIndex, nodalToffset + 2*i-1] = hAc1
+                
+                // A2 duct
+                rowIndex = deltaToffset + 3*i
+                B[rowIndex] = hAc2 * Tci
+                T[rowIndex, rowIndex] = cp * A2 * self.pathVelocities[3*i] + hAc2 * 0.5
+                T[rowIndex, nodalToffset + 2*i] = hAc2
+            }
+            
+            // and now energy-balance equations
+            let A1 = (self.inletLoc == .inner ? self.discs[0].Ainner : self.discs[0].Aouter)
+            let A2 = (self.inletLoc == .outer ? self.discs[0].Ainner : self.discs[0].Aouter)
+            
+            // Start with temperature node 2 (temperature node 1 is known and was set above)
+            rowIndex = nodalToffset + 2
+            A0i = self.discs[0].Abelow
+            
+            T[rowIndex, rowIndex] = -A2 * self.pathVelocities[3]
+            T[rowIndex, nodalToffset + 1] = A0i * self.pathVelocities[2]
+            T[rowIndex, deltaToffset + 2] = A0i * self.pathVelocities[2]
+            
+            // Now the main field
+            for i in 2...n
+            {
+                // start with the simple (and obvious) equation and store it in the T(2i-1) row
+                rowIndex = nodalToffset + 2*i-1
+                T[rowIndex, rowIndex] = 1.0
+                T[rowIndex, nodalToffset + 2*i-3] = -1.0
+                T[rowIndex, deltaToffset + 3*i-2] = -1.0
+                
+                // now the more complicated equation, stored in T(2i)
+                rowIndex = nodalToffset + 2*i
+                let A0iV = self.discs[i-1].Abelow * self.pathVelocities[3*i-1]
+                let A2V = A2 * self.pathVelocities[3*i-3]
+                
+                T[rowIndex, rowIndex] = -A2 * self.pathVelocities[3*i]
+                T[rowIndex, nodalToffset + 2*i-1] = A0iV
+                T[rowIndex, deltaToffset + 3*i-1] = A0iV
+                T[rowIndex, nodalToffset + 2*i-2] = A2V
+                T[rowIndex, deltaToffset + 3*i-3] = A2V
+            }
+            
+            // Now the final "inner" node (actually, the "A1" node)
+            rowIndex = nodalToffset + 2*n+1
+            T[rowIndex, rowIndex] = 1.0
+            T[rowIndex, nodalToffset + 2*n-1] = -1.0
+            T[rowIndex, deltaToffset + 3*n+1] = -1.0
+            
+            // and the final "outer" node ("A2" node)
+            rowIndex = nodalToffset + 2*n+2
+            let A0iV = self.discs.last!.Aabove * self.pathVelocities[3*n+2]
+            let A2V = A2 * self.pathVelocities[3*n]
+            
+            // don't forget that we renamed V(3n+3) as V(1)
+            T[rowIndex, rowIndex] = -A2 * self.pathVelocities[1]
+            T[rowIndex, nodalToffset + 2*n+1] = A0iV
+            T[rowIndex, deltaToffset + 3*n+2] = A0iV
+            T[rowIndex, nodalToffset + 2*n] = A2V
+            T[rowIndex, deltaToffset + 3*n] = A2V
+            
+            // That's it, solve the freakin' thing
+            let X = T.SolveWithVector(Bv: B)
+            
+            for i in 1...2*n+2
+            {
+                self.nodeTemps[i] = X[nodalToffset + i]
+            }
+            
+            tOut = self.nodeTemps[2*n+2]
+            
             
             
         } while fabs(old_tOut - tOut) > 0.1
         
-        
+        tIn = tOut
         
         return true
     }
