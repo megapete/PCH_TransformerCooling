@@ -44,7 +44,26 @@ class CoilModel: NSObject {
         self.sections = sections
     }
     
-    func InitializeInputParameters(tBottom:Double, tTop:Double)
+    // The volumetric flow out of the coil, based on the oil velocity out of the topmost coil section
+    func Qout() -> Double
+    {
+        guard self.sections.count > 0 else
+        {
+            DLog("No sections have been defined")
+            return -Double.greatestFiniteMagnitude
+        }
+        
+        return self.sections.last!.Qout()
+    
+    }
+    
+    // This is the function that should be called to calculate the thermal performance of the coil. It returns the oil temperature exiting the coil at the top.
+    func SimulateThermalWithTemps(tBottom:Double, tTop:Double) -> Double
+    {
+        
+    }
+    
+    func InitializeInputParameters(tBottom:Double, tTop:Double, relaxationFactorP:Double, relaxationFactorV:Double)
     {
         guard sections.count > 0 else
         {

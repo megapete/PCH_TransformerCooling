@@ -38,6 +38,20 @@ class SectionModel: NSObject {
         self.inletLoc = inletLoc
     }
     
+    // The volumetric flow out the top of the coil section
+    func Qout() -> Double
+    {
+        guard self.pathVelocities.count > 0 else
+        {
+            DLog("The solution matrix systems must be solved at least once to get the flow")
+            return Double.greatestFiniteMagnitude
+        }
+        
+        let area = (self.inletLoc == .outer ? self.discs.last!.Aouter : self.discs.last!.Ainner)
+        
+        return pathVelocities.last! * area
+    }
+    
     /// Convenience function to set up a disc section. The calling routine should go in and set the eddy-loss percentages manually after getting back an array created this way.
     static func CreateDiscArray(numDiscs:Int, baseDisc:DiscModel) -> [DiscModel]
     {
