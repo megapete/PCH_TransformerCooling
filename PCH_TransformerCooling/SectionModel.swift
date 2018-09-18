@@ -41,6 +41,12 @@ class SectionModel: NSObject {
     // The volumetric flow out the top of the coil section
     func Qout() -> Double
     {
+        guard self.discs.count > 0 else
+        {
+            DLog("No discs have been defined! Aborting!")
+            return Double.greatestFiniteMagnitude
+        }
+        
         guard self.pathVelocities.count > 0 else
         {
             DLog("The solution matrix systems must be solved at least once to get the flow")
@@ -326,8 +332,6 @@ class SectionModel: NSObject {
             }
             
             tOut = self.nodeTemps[2*n+2]
-            
-            
             
         } while fabs(old_tOut - tOut) > 0.1
         

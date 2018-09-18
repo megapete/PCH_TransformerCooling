@@ -21,6 +21,7 @@
 #define VOLUME_COEFFICIENT_OF_THERMAL_EXPANSION_OF_OIL  6.8E-4  // per degree K (referred to as "𝛽" in BB2E Section 15)
 #define ACCELERATION_DUE_TO_GRAVITY                     9.80665 // m/s2 (referred to as "g" in BB2E Section 15)
 
+
 /// General function to calculate hydraulic diameter for an arbitrary shape, given the cross-secitonal area and the wetted perimeter
 double HydraulicDiameter(double xSect, double wPerimeter);
 

@@ -8,6 +8,9 @@
 
 import Cocoa
 
+let pressureRelaxationFactor = 0.75
+let velocityRelaxationFactor = 0.75
+
 class CoilModel: NSObject {
     
     let usesOilFlowWashers:Bool
@@ -23,15 +26,15 @@ class CoilModel: NSObject {
     
     let amps:Double
     
-    var p0:Double = 0.0
-    var v0:Double = 0.0
+    var p0:Double
+    var v0:Double
     
     var tBottom = 20.0
-    var tTop = 21.0
+    var tTop = 25.0
     
     var sections:[SectionModel] = []
     
-    init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [])
+    init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [], initialP:Double, initialV:Double)
     {
         self.amps = amps
         self.coilID = coilID
@@ -42,6 +45,8 @@ class CoilModel: NSObject {
         self.numOuterSticks = numOuterSticks
         self.stickWidth = stickWidth
         self.sections = sections
+        self.p0 = initialP
+        self.v0 = initialV
     }
     
     // The volumetric flow out of the coil, based on the oil velocity out of the topmost coil section
@@ -54,16 +59,64 @@ class CoilModel: NSObject {
         }
         
         return self.sections.last!.Qout()
-    
     }
     
-    // This is the function that should be called to calculate the thermal performance of the coil. It returns the oil temperature exiting the coil at the top.
-    func SimulateThermalWithTemps(tBottom:Double, tTop:Double) -> Double
+    /// This is the function that should be called to calculate the thermal performance of the coil. It returns the oil temperature exiting the coil at the top and the volumetric flow.
+    func SimulateThermalWithTemps(tBottom:Double, tTop:Double) -> (T:Double, Q:Double)
     {
+        guard self.sections.count > 0 else
+        {
+            DLog("No sections have been defined")
+            return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
+        }
         
+        self.InitializeInputParameters(tBottom: tBottom, tTop: tTop)
+        
+        var pIn = self.p0
+        var vIn = self.v0
+        var tBot = self.tBottom
+        
+        for nextSection in self.sections
+        {
+            if nextSection.PVMatrix == nil
+            {
+                guard nextSection.CreateAndSolvePVmatrix(pIn: &pIn, vIn: &vIn) else
+                {
+                    DLog("PV calculation falied")
+                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                }
+            }
+            else
+            {
+                guard nextSection.SetupAndSolvePVMatrix(pIn: &pIn, vIn: &vIn) else
+                {
+                    DLog("PV calculation falied")
+                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                }
+            }
+            
+            if nextSection.Tmatrix == nil
+            {
+                guard nextSection.CreateAndSolveTmatrix(amps: self.amps, tIn: &tBot) else
+                {
+                    DLog("Temp calculation falied")
+                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                }
+            }
+            else
+            {
+                guard nextSection.SetupAndSolveTmatrix(amps: self.amps, tIn: &tBot) else
+                {
+                    DLog("Temp calculation falied")
+                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                }
+            }
+        }
+        
+        return (self.Qout(), tBot)
     }
     
-    func InitializeInputParameters(tBottom:Double, tTop:Double, relaxationFactorP:Double, relaxationFactorV:Double)
+    func InitializeInputParameters(tBottom:Double, tTop:Double)
     {
         guard sections.count > 0 else
         {
@@ -101,8 +154,11 @@ class CoilModel: NSObject {
             self.tBottom = tBottom
         }
         
-        self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), deltaT)
-        self.v0 = InitialOilVelocity(self.Loss(), inletArea, deltaT)
+        let newPfraction = 1.0 - pressureRelaxationFactor
+        let newVfraction = 1.0 - velocityRelaxationFactor
+        
+        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), deltaT)
+        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, deltaT)
     }
     
     /// Get the overall loss of the coil
