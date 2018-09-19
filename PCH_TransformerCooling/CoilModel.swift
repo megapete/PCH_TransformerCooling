@@ -26,15 +26,15 @@ class CoilModel: NSObject {
     
     let amps:Double
     
-    var p0:Double
-    var v0:Double
+    var p0:Double = 0.0
+    var v0:Double = 0.0
     
     var tBottom = 20.0
     var tTop = 25.0
     
     var sections:[SectionModel] = []
     
-    init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [], initialP:Double, initialV:Double)
+    init(amps:Double, coilID:Double, usesOilFlowWashers:Bool = true, innerDuctDimn:Double = 0.00635, numInnerSticks:Int, outerDuctDimn:Double = 0.00635, numOuterSticks:Int, stickWidth:Double = 0.01905, sections:[SectionModel] = [], initialTbottom:Double = 20.0, initialTtop:Double = 25.0)
     {
         self.amps = amps
         self.coilID = coilID
@@ -45,8 +45,8 @@ class CoilModel: NSObject {
         self.numOuterSticks = numOuterSticks
         self.stickWidth = stickWidth
         self.sections = sections
-        self.p0 = initialP
-        self.v0 = initialV
+        self.tTop = initialTtop
+        self.tBottom = initialTbottom
     }
     
     // The volumetric flow out of the coil, based on the oil velocity out of the topmost coil section

@@ -488,12 +488,12 @@ class SectionModel: NSObject {
         // into v1
         rowIndex = vOffset + 1
         pvm[rowIndex, vOffset + 1] = A2
-        pvm[rowIndex, vOffset + 3 * n] = -A2
+        pvm[rowIndex, vOffset + 3*n] = -A2
         pvm[rowIndex, vOffset + 3*n+2] = -currentDisc.Aabove
         
-        for i in 1..<n-1
+        for i in 2...n
         {
-            currentDisc = self.discs[i]
+            currentDisc = self.discs[i-1]
             A1 = (self.inletLoc == .inner ? currentDisc.Ainner : currentDisc.Aouter)
             A2 = (self.inletLoc == .inner ? currentDisc.Aouter : currentDisc.Ainner)
             

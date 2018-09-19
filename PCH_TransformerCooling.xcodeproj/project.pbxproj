@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D36F401D2152794F008C7816 /* Test.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36F401C2152794F008C7816 /* Test.swift */; };
 		D3826AA721471F3700579344 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3826AA621471F3700579344 /* AppDelegate.swift */; };
 		D3826AA921471F5300579344 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D3826AA821471F5300579344 /* Assets.xcassets */; };
 		D3826AAC21471F5400579344 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = D3826AAA21471F5400579344 /* MainMenu.xib */; };
@@ -20,6 +21,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D36F401C2152794F008C7816 /* Test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test.swift; sourceTree = "<group>"; };
 		D3826AA321471F3700579344 /* PCH_TransformerCooling.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PCH_TransformerCooling.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3826AA621471F3700579344 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D3826AA821471F5300579344 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				D3826AA621471F3700579344 /* AppDelegate.swift */,
+				D36F401C2152794F008C7816 /* Test.swift */,
 				D3EB797D214823F100081FC4 /* CoilModel.swift */,
 				D3EB7985214827C900081FC4 /* SectionModel.swift */,
 				D3EB798721482B9200081FC4 /* DiscModel.swift */,
@@ -158,6 +161,7 @@
 			files = (
 				D3EB79802148242E00081FC4 /* SparseMatrix.swift in Sources */,
 				D3826AB721471FE400579344 /* BluebookThermalFunctions.c in Sources */,
+				D36F401D2152794F008C7816 /* Test.swift in Sources */,
 				D3EB797E214823F100081FC4 /* CoilModel.swift in Sources */,
 				D3EB79842148247A00081FC4 /* PCH_Defs.swift in Sources */,
 				D3EB79832148247A00081FC4 /* GlobalDefs.swift in Sources */,
