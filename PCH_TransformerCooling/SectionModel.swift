@@ -199,7 +199,7 @@ class SectionModel: NSObject {
             var TciPrev = Tci
             
             // Do all the horizontal delta-T's under the discs in the main field
-            for i in 2..<n
+            for i in 2...n
             {
                 currentDisc = self.discs[i-1]
                 
@@ -322,6 +322,13 @@ class SectionModel: NSObject {
             T[rowIndex, deltaToffset + 3*n+2] = A0iV
             T[rowIndex, nodalToffset + 2*n] = A2V
             T[rowIndex, deltaToffset + 3*n] = A2V
+            
+            // debugging
+            // let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            // let theURL = docDir.appendingPathComponent("T_Matrix.txt")
+            // DLog("URL: \(theURL.absoluteString)")
+            
+            // T.OutputAsCSV(url: theURL)
             
             // That's it, solve the freakin' thing
             let X = T.SolveWithVector(Bv: B)
@@ -513,11 +520,11 @@ class SectionModel: NSObject {
         }
         
         // debugging
-        let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-        let theURL = docDir.appendingPathComponent("PV_Matrix.txt")
-        DLog("URL: \(theURL.absoluteString)")
+        // let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        // let theURL = docDir.appendingPathComponent("PV_Matrix.txt")
+        // DLog("URL: \(theURL.absoluteString)")
         
-        pvm.OutputAsCSV(url: theURL)
+        // pvm.OutputAsCSV(url: theURL)
         
         let X = pvm.SolveWithVector(Bv: B)
         
@@ -528,7 +535,7 @@ class SectionModel: NSObject {
         }
         
         self.nodePressures = []
-        self.pathVelocities = []
+        self.pathVelocities = [vIn]
         
         for i in 0..<5*n+4
         {

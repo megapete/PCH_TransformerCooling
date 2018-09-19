@@ -113,7 +113,7 @@ class CoilModel: NSObject {
             }
         }
         
-        return (self.Qout(), tBot)
+        return (tBot, self.Qout())
     }
     
     func InitializeInputParameters(tBottom:Double, tTop:Double)
