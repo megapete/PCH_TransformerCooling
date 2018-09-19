@@ -403,8 +403,11 @@ class SectionModel: NSObject {
         B[rowIndex] = pIn - PressureChangeUsingKandD(currentDisc.kInner, currentDisc.Dinner, OilViscosity(self.nodeTemps[0]), currentDisc.verticalPathLength, vIn)
         
         // We need to be careful with filling the PV matrix. We need to remember that for an arbitrary disc i, the 2i+1 and 2i+2 nodes are the 2i and 2i-1 nodes AFTER i has been incremented. If we just blindly set the matrix row to all 4 nodes around a disc, then the numbers associated those two nodes will be clobbered by the next disc. For that reason, we only solve for P(2i) and P(2i+1) for each disc. We also note that the path 3i+2 is the 3i-1 path after incrementing i, so we won't do that one either. We WILL do the path 3i, and save the equation in THAT row. However, after doing the final disc, we DO need to solve for the final horizontal path (3n+2).
-        for i in 1..<n
+        for i in 1...n
         {
+            // advance to the next disc in the section
+            currentDisc = self.discs[i-1]
+            
             // solve for P(2i-1) - P(2i) and stuff it into row 2i
             rowIndex = pOffset + 2*i
             
@@ -440,9 +443,6 @@ class SectionModel: NSObject {
             
             vCoeff = PressureChangeUsingKandD(K, D, OilViscosity((self.nodeTemps[2*i] + self.nodeTemps[2*i+2]) / 2.0), currentDisc.verticalPathLength, 1.0)
             pvm[rowIndex, vOffset + 3*i] = -vCoeff
-            
-            // advance to the next disc in the section
-            currentDisc = self.discs[i]
         }
         
         // Now do the last path, P(2n+1) - P(2n+2) and store it in row 2n+2
@@ -511,6 +511,13 @@ class SectionModel: NSObject {
             pvm[rowIndex, vOffset + 3*i-3] = A2
             pvm[rowIndex, vOffset + 3*i] = -A2
         }
+        
+        // debugging
+        let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        let theURL = docDir.appendingPathComponent("PV_Matrix.txt")
+        DLog("URL: \(theURL.absoluteString)")
+        
+        pvm.OutputAsCSV(url: theURL)
         
         let X = pvm.SolveWithVector(Bv: B)
         
