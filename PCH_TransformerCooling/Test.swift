@@ -23,6 +23,7 @@ func RunThermalTest()
     lvDiscArray.removeLast()
     lvMiddleSection.InitializeNodeTemps(tIn: 21.5, deltaT: 1.5)
     
+    lvDiscArray.last!.eddyPU = 0.0865
     let lvTopSection = SectionModel(numAxialColumns: 22, blockWidth: 1.5 * metricConv, inletLoc: .inner, discs: lvDiscArray)
     lvTopSection.InitializeNodeTemps(tIn: 23, deltaT: 2.0)
     
@@ -30,9 +31,26 @@ func RunThermalTest()
     
     let lvCoil = CoilModel(amps: 113.6, coilID: 22.676 * metricConv, numInnerSticks: 44, numOuterSticks: 44, sections:[lvBottomSection, lvMiddleSection, lvTopSection])
     
-    let result = lvCoil.SimulateThermalWithTemps(tBottom: 20.0, tTop: 25.0)
+    let height = lvCoil.Height()
+    let loss = lvCoil.Loss()
     
-    DLog("Top temp: \(result.T)°C")
+    lvCoil.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, height, 1)
+    lvCoil.v0 = InitialOilVelocity(loss, lvDisc.Ainner, 5.0)
     
+    var tBot = 20.0
+    var tAmb = 20.0
+    var result = lvCoil.SimulateThermalWithTemps(tBottom: tBot, tTop: tBot + 5.0)
+    
+    let topDisc = lvDiscArray.last!
+    DLog("Top oil temp: \(result.T)°C; Top disc temp: \(topDisc.temperature)°C")
+    
+    
+    
+    
+    while true // result.T < 70.0
+    {
+        result = lvCoil.SimulateThermalWithTemps(tBottom: 50.0, tTop: result.T)
+        DLog("Top oil temp: \(result.T)°C; Top disc temp: \(topDisc.temperature)°C")
+    }
     
 }

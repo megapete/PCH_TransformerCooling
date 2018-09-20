@@ -142,6 +142,7 @@ class CoilModel: NSObject {
         let inletArea = (self.sections[0].inletLoc == .inner ? bottomMostDisc.Ainner : bottomMostDisc.Aouter)
         
         var deltaT = tTop - tBottom
+        let aveT = (tTop + tBottom) / 2.0
         
         if deltaT == 0.0
         {
@@ -157,8 +158,32 @@ class CoilModel: NSObject {
         let newPfraction = 1.0 - pressureRelaxationFactor
         let newVfraction = 1.0 - velocityRelaxationFactor
         
-        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), deltaT)
+        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), self.AverageInteriorOilTemperature() - aveT)
         self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, deltaT)
+    }
+    
+    /// Get the average oil temperature inside the coil
+    func AverageInteriorOilTemperature() -> Double
+    {
+        var tempSum = 0.0
+        var numNodes = 0.0
+        
+        for nextSection in self.sections
+        {
+            for nextNode in nextSection.nodeTemps
+            {
+                tempSum += nextNode
+            }
+            
+            numNodes += Double(nextSection.nodeTemps.count)
+        }
+        
+        guard numNodes > 0.0 else
+        {
+            return 0.0
+        }
+        
+        return tempSum / numNodes
     }
     
     /// Get the overall loss of the coil

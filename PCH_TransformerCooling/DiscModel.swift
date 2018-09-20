@@ -22,7 +22,7 @@ class DiscModel: NSObject {
     // let belowGapSpaceFactor:Double
     
     let resistance20:Double
-    let eddyPU:Double
+    var eddyPU:Double
     
     // Things that need to be calculated in the initializer
     let Dinner:Double
