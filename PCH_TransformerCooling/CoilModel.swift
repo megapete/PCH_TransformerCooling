@@ -62,7 +62,7 @@ class CoilModel: NSObject {
     }
     
     /// This is the function that should be called to calculate the thermal performance of the coil. It returns the oil temperature exiting the coil at the top and the volumetric flow.
-    func SimulateThermalWithTemps(tBottom:Double, tTop:Double) -> (T:Double, Q:Double)
+    func SimulateThermalWithTemps(tBottom:Double, tTop:Double, coolingOffset:Double, radHeight:Double) -> (T:Double, Q:Double)
     {
         guard self.sections.count > 0 else
         {
@@ -74,16 +74,17 @@ class CoilModel: NSObject {
         
         // var pIn = self.p0
         // var vIn = self.v0
-        var coilBottomTemp = tBottom
+        
         var coilTopTemp = tTop
         var oldCoilTopTemp = 0.0
         
         repeat
         {
-            self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop)
+            self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight:radHeight)
             
             var pIn = self.p0
             var vIn = self.v0
+            var coilBottomTemp = tBottom
             
             for nextSection in self.sections
             {
@@ -103,6 +104,15 @@ class CoilModel: NSObject {
                         return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
                     }
                 }
+                
+                // debugging
+                /*
+                let vOut = vIn
+                let A1 = nextSection.discs.last!.Ainner
+                let A2 = nextSection.discs.last!.Aouter
+                
+                DLog("vOut=\(vOut); vin*A1/A2=\(self.v0 * A1/A2)")
+                */
                 
                 if nextSection.Tmatrix == nil
                 {
@@ -151,7 +161,7 @@ class CoilModel: NSObject {
         return topSection.discs.last!.temperature
     }
     
-    func InitializeInputParameters(tOutsideBottom:Double, tOutsideTop:Double)
+    func InitializeInputParameters(tOutsideBottom:Double, tOutsideTop:Double, coolingOffset: Double, radHeight: Double)
     {
         guard sections.count > 0 else
         {
@@ -176,15 +186,23 @@ class CoilModel: NSObject {
         
         let inletArea = (self.sections[0].inletLoc == .inner ? bottomMostDisc.Ainner : bottomMostDisc.Aouter)
         
-        let aveOutsideTemp = (tOutsideTop + tOutsideBottom) / 2.0
+        let coilHeight = self.Height()
+        
+        let tBotDimn = max((coilHeight - radHeight) / 2.0 + coolingOffset, 0.0)
+        
+        let tBotPU = tBotDimn / coilHeight
+        let aveOutsideTemp = tOutsideBottom * tBotPU + (1.0 - tBotPU) * (tOutsideBottom + tOutsideTop) / 2.0
+        let aveInsideTemp = self.AverageInteriorOilTemperature()
         
         self.tBottom = tOutsideBottom
         
         let newPfraction = 1.0 - pressureRelaxationFactor
         let newVfraction = 1.0 - velocityRelaxationFactor
         
-        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), self.AverageInteriorOilTemperature() - aveOutsideTemp)
-        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, self.TopOilTemp() - tOutsideBottom)
+        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), aveInsideTemp - aveOutsideTemp)
+        
+        let coilTopOilTemp = self.TopOilTemp()
+        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, coilTopOilTemp - tOutsideBottom)
     }
     
     func TopOilTemp() -> Double
