@@ -70,53 +70,88 @@ class CoilModel: NSObject {
             return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
         }
         
-        self.InitializeInputParameters(tBottom: tBottom, tTop: tTop)
+        // self.InitializeInputParameters(tBottom: tBottom, tTop: tTop)
         
-        var pIn = self.p0
-        var vIn = self.v0
-        var tBot = self.tBottom
+        // var pIn = self.p0
+        // var vIn = self.v0
+        var coilBottomTemp = tBottom
+        var coilTopTemp = tTop
+        var oldCoilTopTemp = 0.0
         
-        for nextSection in self.sections
+        repeat
         {
-            if nextSection.PVMatrix == nil
+            self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop)
+            
+            var pIn = self.p0
+            var vIn = self.v0
+            
+            for nextSection in self.sections
             {
-                guard nextSection.CreateAndSolvePVmatrix(pIn: &pIn, vIn: &vIn) else
+                if nextSection.PVMatrix == nil
                 {
-                    DLog("PV calculation falied")
-                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    guard nextSection.CreateAndSolvePVmatrix(pIn: &pIn, vIn: &vIn) else
+                    {
+                        DLog("PV calculation falied")
+                        return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    }
                 }
-            }
-            else
-            {
-                guard nextSection.SetupAndSolvePVMatrix(pIn: &pIn, vIn: &vIn) else
+                else
                 {
-                    DLog("PV calculation falied")
-                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    guard nextSection.SetupAndSolvePVMatrix(pIn: &pIn, vIn: &vIn) else
+                    {
+                        DLog("PV calculation falied")
+                        return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    }
+                }
+                
+                if nextSection.Tmatrix == nil
+                {
+                    guard nextSection.CreateAndSolveTmatrix(amps: self.amps, tIn: &coilBottomTemp) else
+                    {
+                        DLog("Temp calculation falied")
+                        return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    }
+                }
+                else
+                {
+                    guard nextSection.SetupAndSolveTmatrix(amps: self.amps, tIn: &coilBottomTemp) else
+                    {
+                        DLog("Temp calculation falied")
+                        return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
+                    }
                 }
             }
             
-            if nextSection.Tmatrix == nil
-            {
-                guard nextSection.CreateAndSolveTmatrix(amps: self.amps, tIn: &tBot) else
-                {
-                    DLog("Temp calculation falied")
-                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
-                }
-            }
-            else
-            {
-                guard nextSection.SetupAndSolveTmatrix(amps: self.amps, tIn: &tBot) else
-                {
-                    DLog("Temp calculation falied")
-                    return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
-                }
-            }
-        }
+            oldCoilTopTemp = coilTopTemp
+            coilTopTemp = coilBottomTemp
+            
+            DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot())")
+            
+        } while fabs(oldCoilTopTemp - coilTopTemp) > 0.1
         
-        return (tBot, self.Qout())
+        return (coilTopTemp, self.Qout())
     }
     
-    func InitializeInputParameters(tBottom:Double, tTop:Double)
+    func HotSpot() -> Double
+    {
+        guard sections.count > 0 else
+        {
+            DLog("No sections have been defined!")
+            return -Double.greatestFiniteMagnitude
+        }
+        
+        let topSection = sections.last!
+        
+        guard topSection.discs.count > 0 else
+        {
+            DLog("No discs have been defined for the topmost section")
+            return -Double.greatestFiniteMagnitude
+        }
+        
+        return topSection.discs.last!.temperature
+    }
+    
+    func InitializeInputParameters(tOutsideBottom:Double, tOutsideTop:Double)
     {
         guard sections.count > 0 else
         {
@@ -141,25 +176,28 @@ class CoilModel: NSObject {
         
         let inletArea = (self.sections[0].inletLoc == .inner ? bottomMostDisc.Ainner : bottomMostDisc.Aouter)
         
-        var deltaT = tTop - tBottom
-        let aveT = (tTop + tBottom) / 2.0
+        let aveOutsideTemp = (tOutsideTop + tOutsideBottom) / 2.0
         
-        if deltaT == 0.0
-        {
-            DLog("Top oil must be greater than bottom oil. Setting to a difference of 1.0")
-            deltaT = 1.0
-        }
-        else
-        {
-            self.tTop = tTop
-            self.tBottom = tBottom
-        }
+        self.tBottom = tOutsideBottom
         
         let newPfraction = 1.0 - pressureRelaxationFactor
         let newVfraction = 1.0 - velocityRelaxationFactor
         
-        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), self.AverageInteriorOilTemperature() - aveT)
-        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, deltaT)
+        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), self.AverageInteriorOilTemperature() - aveOutsideTemp)
+        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, self.TopOilTemp() - tOutsideBottom)
+    }
+    
+    func TopOilTemp() -> Double
+    {
+        guard sections.count > 0 else
+        {
+            DLog("No sections have been defined!")
+            return -Double.greatestFiniteMagnitude
+        }
+        
+        let n = self.sections.last!.discs.count
+        
+        return self.sections.last!.nodeTemps[2*n+2]
     }
     
     /// Get the average oil temperature inside the coil
