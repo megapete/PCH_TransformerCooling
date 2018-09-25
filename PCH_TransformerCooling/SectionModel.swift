@@ -99,27 +99,29 @@ class SectionModel: NSObject {
         return result
     }
     
-    /// Initialize the node temperature array, with tIn as the inlet temp and deltaT as the rise through the section
-    func InitializeNodeTemps(tIn:Double, deltaT:Double)
+    /// Initialize the node temperature array, with tIn as the inlet temp and deltaT as the rise through the section. Return the last temperature (at the top of the section)
+    func InitializeNodeTemps(tIn:Double, deltaT:Double) -> Double
     {
         guard self.discs.count > 0 else
         {
             DLog("No discs have been defined! Aborting!")
-            return
+            return -Double.greatestFiniteMagnitude
         }
         
-        let numDiscs = self.discs.count
-        let deltaTperDisc = deltaT / Double(numDiscs)
+        let n = self.discs.count
+        let deltaTperDisc = deltaT / Double(n+1)
         var nTemp = tIn
         
-        self.nodeTemps = [Double](repeating: tIn, count: 2 * numDiscs + 3)
+        self.nodeTemps = [Double](repeating: tIn, count: 2 * n + 3)
         
-        for i in 1...numDiscs + 1
+        for i in 1...n + 1
         {
             nTemp += deltaTperDisc
             self.nodeTemps[2*i-1] = nTemp
             self.nodeTemps[2*i] = nTemp + 0.5 * deltaTperDisc
         }
+        
+        return self.nodeTemps[2*n+2]
     }
     
     /// Create and populate a sparse matrix to calculate the node temperatures. If the matrix was created then solve it, otheriwse return false. If no discs have been modeled, the routine does nothing and returns false.
@@ -167,7 +169,7 @@ class SectionModel: NSObject {
             // update all the disc temperatures using the current surrounding node temps, path velocities, and amps through the disc
             for i in 1...n
             {
-                self.discs[i-1].UpdateTemperature(amps: amps, T1: self.nodeTemps[2*i-1], T2: self.nodeTemps[2*i], T3: self.nodeTemps[2*i+1], T4: self.nodeTemps[2*i+2], v12: self.pathVelocities[3*i-1], v34: self.pathVelocities[3*i+2], v13: self.pathVelocities[3*i+1], v24: self.pathVelocities[3*i])
+                self.discs[i-1].UpdateTemperature(amps: amps, inletLocation: self.inletLoc, T1: self.nodeTemps[2*i-1], T2: self.nodeTemps[2*i], T3: self.nodeTemps[2*i+1], T4: self.nodeTemps[2*i+2], v12: self.pathVelocities[3*i-1], v34: self.pathVelocities[3*i+2], v13: self.pathVelocities[3*i+1], v24: self.pathVelocities[3*i])
             }
             
             // constant that turns up a lot
@@ -187,9 +189,9 @@ class SectionModel: NSObject {
             var currentDisc = self.discs[0]
             var rowIndex = deltaToffset + 2
             var Tci = currentDisc.temperature
-            var hAc0 = currentDisc.hAbove * currentDisc.AcAbove
+            var hAc0 = currentDisc.hBelow * currentDisc.AcBelow
             // var Ac0 = currentDisc.AcAbove
-            var A0i = currentDisc.Aabove
+            var A0i = currentDisc.Abelow
             
             B[rowIndex] = hAc0 * Tci
             
@@ -208,7 +210,7 @@ class SectionModel: NSObject {
                 
                 Tci = currentDisc.temperature
                 
-                hAc0 = currentDisc.hAbove * currentDisc.AcAbove
+                hAc0 = currentDisc.hBelow * currentDisc.AcBelow
                 A0i = currentDisc.Abelow
                 
                 B[rowIndex] = hAc0 * (Tci + TciPrev)
@@ -273,7 +275,7 @@ class SectionModel: NSObject {
             }
             
             // and now energy-balance equations
-            let A1 = (self.inletLoc == .inner ? self.discs[0].Ainner : self.discs[0].Aouter)
+            // let A1 = (self.inletLoc == .inner ? self.discs[0].Ainner : self.discs[0].Aouter)
             let A2 = (self.inletLoc == .outer ? self.discs[0].Ainner : self.discs[0].Aouter)
             
             // Start with temperature node 2 (temperature node 1 is known and was set above)
@@ -545,6 +547,7 @@ class SectionModel: NSObject {
             }
             else
             {
+                // DLog("X[\(i)] = \(X[i])")
                 self.pathVelocities.append(X[i])
             }
         }

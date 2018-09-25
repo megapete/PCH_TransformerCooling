@@ -50,7 +50,7 @@ class DiscModel: NSObject {
     let horizontalPathLength:Double
     
     // Things that need to be calculated every time through
-    var temperature:Double = 20.0
+    var temperature:Double = 30.0
     // var loss:Double = 0.0
     var hInner:Double = 0.0
     var hOuter:Double = 0.0
@@ -121,7 +121,7 @@ class DiscModel: NSObject {
     }
     
     /// Update the temperature of the disc. The subscript numbers for the velocity (12, 34, etc) are the paths as referenced from disc 1. The subscripts for the temperatures are the nodes around disc 1.
-    func UpdateTemperature(amps:Double, T1:Double, T2:Double, T3:Double, T4:Double, v12:Double, v34:Double, v13:Double, v24:Double) //-> Double
+    func UpdateTemperature(amps:Double, inletLocation:SectionModel.InletLocation, T1:Double, T2:Double, T3:Double, T4:Double, v12:Double, v34:Double, v13:Double, v24:Double) //-> Double
     {
         var oldTemp = self.temperature
         
@@ -129,6 +129,12 @@ class DiscModel: NSObject {
         let Tabove = (T3 + T4) / 2.0
         let Tinner = (T1 + T3) / 2.0
         let Touter = (T2 + T4) / 2.0
+        
+        let D13 = (inletLocation == .inner ? self.Dinner : self.Douter)
+        let D24 = (inletLocation == .inner ? self.Douter : self.Dinner)
+        
+        let Ac13 = (inletLocation == .inner ? self.AcInner : self.AcOuter)
+        let Ac24 = (inletLocation == .inner ? self.AcOuter : self.AcInner)
         
         repeat {
         
@@ -142,13 +148,13 @@ class DiscModel: NSObject {
             let hConv34 = ConvectionCoefficient(self.Dabove, self.dims.rb, Tabove, self.temperature - Tabove, v34)
             self.hAbove = HeatTransferCoefficient(hConv34, self.paperCover, THERMAL_CONDUCTIVITY_OF_PAPER)
             
-            let hConv13 = ConvectionCoefficient(self.Dinner, self.dims.h, Tinner, self.temperature - Tinner, v13)
+            let hConv13 = ConvectionCoefficient(D13, self.dims.h, Tinner, self.temperature - Tinner, v13)
             self.hInner = HeatTransferCoefficient(hConv13, self.paperCover, THERMAL_CONDUCTIVITY_OF_PAPER)
             
-            let hConv24 = ConvectionCoefficient(self.Douter, self.dims.h, Touter, self.temperature - Touter, v24)
+            let hConv24 = ConvectionCoefficient(D24, self.dims.h, Touter, self.temperature - Touter, v24)
             self.hOuter = HeatTransferCoefficient(hConv24, self.paperCover, THERMAL_CONDUCTIVITY_OF_PAPER)
             
-            self.temperature = (self.Loss(amps: amps) + self.hBelow * self.AcBelow * Tbelow + self.hAbove * self.AcAbove * Tabove + self.hInner * self.AcInner * Tinner + self.hOuter * self.AcOuter * Touter) / (self.hBelow * self.AcBelow + self.hAbove * self.AcAbove + self.hInner * self.AcInner + self.hOuter * self.AcOuter)
+            self.temperature = (self.Loss(amps: amps) + self.hBelow * self.AcBelow * Tbelow + self.hAbove * self.AcAbove * Tabove + self.hInner * Ac13 * Tinner + self.hOuter * Ac24 * Touter) / (self.hBelow * self.AcBelow + self.hAbove * self.AcAbove + self.hInner * Ac13 + self.hOuter * Ac24)
             
         
         } while fabs(self.temperature - oldTemp) > 0.1

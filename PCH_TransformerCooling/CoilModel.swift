@@ -8,8 +8,8 @@
 
 import Cocoa
 
-let pressureRelaxationFactor = 0.75
-let velocityRelaxationFactor = 0.75
+let pressureRelaxationFactor = 0.25
+let velocityRelaxationFactor = pressureRelaxationFactor
 
 class CoilModel: NSObject {
     
@@ -104,7 +104,10 @@ class CoilModel: NSObject {
                         return (Double.greatestFiniteMagnitude, Double.greatestFiniteMagnitude)
                     }
                 }
-                
+            }
+            
+            for nextSection in self.sections
+            {
                 // debugging
                 /*
                 let vOut = vIn
@@ -135,7 +138,11 @@ class CoilModel: NSObject {
             oldCoilTopTemp = coilTopTemp
             coilTopTemp = coilBottomTemp
             
-            DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot())")
+            let Ptop = self.sections.last!.nodePressures.last!
+            let vTop = self.sections.last!.pathVelocities[1]
+            let Pbottom = self.p0
+            
+            DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot()); Pbottom: \(Pbottom) Ptop: \(Ptop), vBottom: \(self.v0); vTop: \(vTop)")
             
         } while fabs(oldCoilTopTemp - coilTopTemp) > 0.1
         
