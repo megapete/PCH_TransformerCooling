@@ -534,7 +534,7 @@ class SectionModel: NSObject {
             return false
         }
         
-        self.nodePressures = []
+        self.nodePressures = [pIn]
         self.pathVelocities = [vIn]
         
         for i in 0..<5*n+4
