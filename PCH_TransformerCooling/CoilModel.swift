@@ -8,8 +8,7 @@
 
 import Cocoa
 
-let pressureRelaxationFactor = 0.25
-let velocityRelaxationFactor = pressureRelaxationFactor
+let relaxationFactor = 0.75
 
 class CoilModel: NSObject {
     
@@ -27,6 +26,7 @@ class CoilModel: NSObject {
     let amps:Double
     
     var p0:Double = 0.0
+    var pTop = 0.0
     var v0:Double = 0.0
     
     var tBottom = 20.0
@@ -105,6 +105,17 @@ class CoilModel: NSObject {
                     }
                 }
             }
+            
+            let topSection = self.sections.last!
+            let n = topSection.discs.count
+            
+            guard n != 0 else
+            {
+                DLog("No discs defined for topmost section!")
+                return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
+            }
+            
+            self.pTop = topSection.nodePressures[2*n+2]
             
             for nextSection in self.sections
             {
@@ -202,14 +213,14 @@ class CoilModel: NSObject {
         let aveInsideTemp = self.AverageInteriorOilTemperature()
         
         self.tBottom = tOutsideBottom
+    
+        let oldP0 = self.p0
+        self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), aveInsideTemp - aveOutsideTemp)
         
-        let newPfraction = 1.0 - pressureRelaxationFactor
-        let newVfraction = 1.0 - velocityRelaxationFactor
-        
-        self.p0 = pressureRelaxationFactor * self.p0 + newPfraction * PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), aveInsideTemp - aveOutsideTemp)
-        
-        let coilTopOilTemp = self.TopOilTemp()
-        self.v0 = velocityRelaxationFactor * self.v0 + newVfraction * InitialOilVelocity(self.Loss(), inletArea, coilTopOilTemp - tOutsideBottom)
+        // let coilTopOilTemp = self.TopOilTemp()
+        let oldV0 = self.v0
+        let newV0 = InitialOilVelocity(self.Loss(), self.sections[0].discs[0].Ainner, self.TopOilTemp() - tOutsideBottom)
+        self.v0 = relaxationFactor * newV0 + (1.0 - relaxationFactor) * (self.p0 / (oldP0 - self.pTop)) * oldV0
     }
     
     func TopOilTemp() -> Double

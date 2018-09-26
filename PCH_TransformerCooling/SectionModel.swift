@@ -30,6 +30,8 @@ class SectionModel: NSObject {
     
     var inletLoc:InletLocation
     
+    var desc:String = ""
+    
     init(numAxialColumns:Int, blockWidth:Double, inletLoc:InletLocation = .inner, discs:[DiscModel] = [])
     {
         self.numAxialColumns = numAxialColumns
@@ -162,6 +164,8 @@ class SectionModel: NSObject {
             return false
         }
         
+        var outputString = ""
+        
         repeat {
             
             old_tOut = tOut
@@ -179,7 +183,7 @@ class SectionModel: NSObject {
             
             T.ClearEntries()
             
-            // We'll adopt the numbering system that I used in the old program
+            // We'll adopt the numbering system that I used in the old program. The final temperature stored is at node 2n+2, which translates into index (row) 2n+1 in the matrix solutio. We don't store T0, so we define the nodal offset as -1 (so that T1 gets stored at row 0). The first delta-T we store is on path 2, which we will want to store at row 2n+2. We therefore use an offset of 2n for the delta-T rows.
             let nodalToffset = -1
             let deltaToffset = 2 * n
             
@@ -198,9 +202,7 @@ class SectionModel: NSObject {
             T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[2] + hAc0 * 0.5
             T[rowIndex, nodalToffset + 1] = hAc0
             
-            var TciPrev = Tci
-            
-            // Do all the horizontal delta-T's under the discs in the main field
+            // Do all the horizontal delta-T's under the discs (paths 3i-1) in the main field (ie: from disc 2 to disc n)
             for i in 2...n
             {
                 currentDisc = self.discs[i-1]
@@ -208,6 +210,7 @@ class SectionModel: NSObject {
                 // put this equation into the 3i-1 row
                 rowIndex = deltaToffset + 3*i-1
                 
+                let TciPrev = Tci
                 Tci = currentDisc.temperature
                 
                 hAc0 = currentDisc.hBelow * currentDisc.AcBelow
@@ -217,8 +220,6 @@ class SectionModel: NSObject {
                 
                 T[rowIndex, rowIndex] = cp * A0i * self.pathVelocities[3*i-1] + hAc0
                 T[rowIndex, nodalToffset + 2*i-1] = 2.0 * hAc0
-                
-                TciPrev = Tci
             }
             
             // Now the horizontal duct above the final disc
@@ -235,7 +236,7 @@ class SectionModel: NSObject {
             
             // VERTICAL Ducts
             
-            // Incoming temp
+            // Incoming temp, which was set on entry to this routine
             T[0,0] = 1.0
             B[0] = self.nodeTemps[0]
             
@@ -325,24 +326,39 @@ class SectionModel: NSObject {
             T[rowIndex, nodalToffset + 2*n] = A2V
             T[rowIndex, deltaToffset + 3*n] = A2V
             
-            // debugging
-            // let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-            // let theURL = docDir.appendingPathComponent("T_Matrix.txt")
-            // DLog("URL: \(theURL.absoluteString)")
+            
             
             // T.OutputAsCSV(url: theURL)
             
             // That's it, solve the freakin' thing
+            
             let X = T.SolveWithVector(Bv: B)
             
             for i in 1...2*n+2
             {
                 self.nodeTemps[i] = X[nodalToffset + i]
+                outputString.append("\(self.nodeTemps[i])\n")
             }
             
             tOut = self.nodeTemps[2*n+2]
             
         } while fabs(old_tOut - tOut) > 0.1
+        
+        // debugging
+        // let docDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        // let theURL = docDir.appendingPathComponent("NodeTemps_\(self.desc).txt")
+        // DLog("URL: \(theURL.absoluteString)")
+        
+        /*
+        do
+        {
+            try outputString.write(to: theURL, atomically: true, encoding: .utf16)
+            
+        } catch {
+            
+            DLog("Write error: \(error.localizedDescription)")
+        }
+        */
         
         tIn = tOut
         
