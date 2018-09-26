@@ -18,7 +18,7 @@ func RunThermalTest()
     
     let lvBottomSection = SectionModel(numAxialColumns: 22, blockWidth: 1.5 * metricConv, inletLoc: .inner, discs: lvDiscArray)
     
-    var tBot = 20.0
+    var tBot = 40.0
     var tTop = lvBottomSection.InitializeNodeTemps(tIn: tBot, deltaT: 4.0)
     
     let lvMiddleSection = SectionModel(numAxialColumns: 22, blockWidth: 1.5 * metricConv, inletLoc: .outer, discs: lvDiscArray)
@@ -27,7 +27,7 @@ func RunThermalTest()
     
     lvDiscArray.last!.eddyPU = 0.0865
     let lvTopSection = SectionModel(numAxialColumns: 22, blockWidth: 1.5 * metricConv, inletLoc: .inner, discs: lvDiscArray)
-    tTop = lvTopSection.InitializeNodeTemps(tIn: tTop, deltaT: 4.0)
+    tTop = lvTopSection.InitializeNodeTemps(tIn: tTop, deltaT: 10.0)
     
     // TODO: Fix eddy losses "per disc"
     

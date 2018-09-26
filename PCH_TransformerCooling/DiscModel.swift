@@ -154,7 +154,15 @@ class DiscModel: NSObject {
             let hConv24 = ConvectionCoefficient(D24, self.dims.h, Touter, self.temperature - Touter, v24)
             self.hOuter = HeatTransferCoefficient(hConv24, self.paperCover, THERMAL_CONDUCTIVITY_OF_PAPER)
             
-            self.temperature = (self.Loss(amps: amps) + self.hBelow * self.AcBelow * Tbelow + self.hAbove * self.AcAbove * Tabove + self.hInner * Ac13 * Tinner + self.hOuter * Ac24 * Touter) / (self.hBelow * self.AcBelow + self.hAbove * self.AcAbove + self.hInner * Ac13 + self.hOuter * Ac24)
+            let loss = self.Loss(amps: amps)
+            let hAcBelow = self.hBelow * self.AcBelow
+            let hAcAbove = self.hAbove * self.AcAbove
+            let hAcInner = self.hInner * Ac13
+            let hAcOuter = self.hOuter * Ac24
+            
+            let sumHAC = hAcBelow + hAcAbove + hAcInner + hAcOuter
+            
+            self.temperature = (loss + hAcBelow * Tbelow + hAcAbove * Tabove + hAcInner * Tinner + hAcOuter * Touter) / sumHAC
             
         
         } while fabs(self.temperature - oldTemp) > 0.1
