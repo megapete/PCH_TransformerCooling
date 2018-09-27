@@ -8,7 +8,7 @@
 
 import Cocoa
 
-let relaxationFactor = 0.75
+let relaxationFactor = 0.5
 
 class CoilModel: NSObject {
     
@@ -26,7 +26,7 @@ class CoilModel: NSObject {
     let amps:Double
     
     var p0:Double = 0.0
-    var pTop = 0.0
+    // var pTop = 0.0
     var v0:Double = 0.0
     
     var tBottom = 20.0
@@ -70,18 +70,15 @@ class CoilModel: NSObject {
             return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
         }
         
-        // self.InitializeInputParameters(tBottom: tBottom, tTop: tTop)
-        
-        // var pIn = self.p0
-        // var vIn = self.v0
+        self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight:radHeight)
         
         var coilTopTemp = tTop
         var oldCoilTopTemp = 0.0
         
+        var doneFlag = false
+        
         repeat
         {
-            self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight:radHeight)
-            
             var pIn = self.p0
             var vIn = self.v0
             var coilBottomTemp = tBottom
@@ -105,17 +102,6 @@ class CoilModel: NSObject {
                     }
                 }
             }
-            
-            let topSection = self.sections.last!
-            let n = topSection.discs.count
-            
-            guard n != 0 else
-            {
-                DLog("No discs defined for topmost section!")
-                return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
-            }
-            
-            self.pTop = topSection.nodePressures[2*n+2]
             
             for nextSection in self.sections
             {
@@ -151,13 +137,34 @@ class CoilModel: NSObject {
             
             let Ptop = self.sections.last!.nodePressures.last!
             let vTop = self.sections.last!.pathVelocities[1]
-            let Pbottom = self.p0
+            let Pold = self.p0
+            let vOld = self.v0
             
-            DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot()); Pbottom: \(Pbottom) Ptop: \(Ptop), vBottom: \(self.v0); vTop: \(vTop)")
             
-        } while fabs(oldCoilTopTemp - coilTopTemp) > 0.1
+            // DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot()); Pbottom: \(Pold) Ptop: \(Ptop), vBottom: \(self.v0); vTop: \(vTop)")
+            
+            InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight: radHeight)
+            
+            DLog("v0: \(self.v0); oldV0: \(vOld); P0: \(self.p0) oldP0: \(Pold); TopP: \(Ptop)")
+            
+            doneFlag = CoilModel.ValuesAreEqual(value1: self.v0, value2: vOld, fractionTolerance: 0.001) && CoilModel.ValuesAreEqual(value1: self.p0, value2: Pold, fractionTolerance: 0.001)
+            
+        } while !doneFlag
         
         return (coilTopTemp, self.Qout())
+    }
+    
+    static func ValuesAreEqual(value1:Double, value2:Double, fractionTolerance:Double) -> Bool
+    {
+        if value1 == value2
+        {
+            return true
+        }
+        
+        let minVal = min(value1, value2)
+        let maxVal = max(value1, value2)
+        
+        return (1.0 - minVal / maxVal) <= fractionTolerance
     }
     
     func HotSpot() -> Double
@@ -214,13 +221,33 @@ class CoilModel: NSObject {
         
         self.tBottom = tOutsideBottom
     
-        let oldP0 = self.p0
+        var oldP0 = self.p0
         self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), aveInsideTemp - aveOutsideTemp)
         
         // let coilTopOilTemp = self.TopOilTemp()
         let oldV0 = self.v0
         let newV0 = InitialOilVelocity(self.Loss(), self.sections[0].discs[0].Ainner, self.TopOilTemp() - tOutsideBottom)
-        self.v0 = relaxationFactor * newV0 + (1.0 - relaxationFactor) * (self.p0 / (oldP0 - self.pTop)) * oldV0
+        
+        var topP = self.TopPressure()
+        if topP == nil
+        {
+            // first time through
+            oldP0 = self.p0
+            topP = 0.0
+        }
+        
+        self.v0 = relaxationFactor * newV0 + (1.0 - relaxationFactor) * (self.p0 / (oldP0 - topP!)) * oldV0
+    }
+    
+    func TopPressure() -> Double?
+    {
+        guard sections.count > 0 else
+        {
+            DLog("No sections have been defined!")
+            return nil
+        }
+        
+        return self.sections.last!.nodePressures.last
     }
     
     func TopOilTemp() -> Double

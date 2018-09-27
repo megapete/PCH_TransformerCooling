@@ -20,9 +20,10 @@ func RunThermalTest()
     lvBottomSection.desc = "Lowest"
     
     let tAmb = 20.0
-    var tBot = tAmb + 30.0
+    var tBot = tAmb + 0.0
+    var tOutsideTop = tBot + 2.0
     
-    let initialDeltaTperSection = 2.0
+    let initialDeltaTperSection = 5.0
     
     var tTop = lvBottomSection.InitializeNodeTemps(tIn: tBot, deltaT: initialDeltaTperSection)
     
@@ -46,16 +47,13 @@ func RunThermalTest()
     
     let topOilDiff = 1.0
     
-    lvCoil.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, height, topOilDiff / 2.0)
-    lvCoil.v0 = InitialOilVelocity(loss, lvDisc.Ainner, tTop - tBot)
+    // lvCoil.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, height, topOilDiff / 2.0)
+    // lvCoil.v0 = InitialOilVelocity(loss, lvDisc.Ainner, tTop - tBot)
     
-    var result = lvCoil.SimulateThermalWithTemps(tBottom: tBot, tTop: tTop - topOilDiff, coolingOffset: 0.381, radHeight: 2.3)
+    var result = lvCoil.SimulateThermalWithTemps(tBottom: tBot, tTop: tOutsideTop, coolingOffset: 0.381, radHeight: 2.3)
     
     let topDisc = lvDiscArray.last!
     DLog("LV loss: \(loss) watts; Top oil temp: \(result.T)°C; Top disc temp: \(topDisc.temperature)°C")
-    
-    
-    
     
     while true // result.T < 70.0
     {
