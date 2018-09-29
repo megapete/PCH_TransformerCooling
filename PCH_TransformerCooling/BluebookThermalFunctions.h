@@ -15,7 +15,7 @@
 #include <stdbool.h>
 
 #define SPECIFIC_HEAT_OF_OIL                            1880.0  // J/kg (referred to as "c" in BB2E Section 15)
-#define FLUID_DENSITY_OF_OIL                            867.0   // kg/m3 (referred to as "⍴" in BB2E Section 15)
+#define FLUID_DENSITY_OF_OIL_40                         867.0   // kg/m3 (at 40°C) (referred to as "⍴" in BB2E Section 15)
 #define THERMAL_CONDUCTIVITY_OF_OIL                     0.11    // W/m•C (referred to as "k" in BB2E Section 15)
 #define THERMAL_CONDUCTIVITY_OF_PAPER                   0.16    // W/m•C (referred to as "k" in BB2E Section 15)
 #define VOLUME_COEFFICIENT_OF_THERMAL_EXPANSION_OF_OIL  6.8E-4  // per degree K (referred to as "𝛽" in BB2E Section 15)
@@ -63,6 +63,9 @@ double ConvectionCoefficient(double hydraulicDiameter, double pathLength, double
 
 /// The surface heat transfer coefficient (BB2E, p514, eq:15.22)
 double HeatTransferCoefficient(double hConv, double tInsul, double kInsul);
+
+/// Fluid density of oil per BB2E p.539 (note that earlier in the chapter, the text says that the fluid density of oil is constant in the range of teperatures of interest, but in the subsequent Del Vechhio paper - and probably 3E - he says that rho should be recalculated on each iteration.
+double OilFluidDensity_Rho(double temp);
 
 
 #endif /* BluebookThermalFunctions_h */

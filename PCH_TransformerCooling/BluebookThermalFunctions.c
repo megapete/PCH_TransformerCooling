@@ -90,7 +90,7 @@ double OilViscosity(double tempInC)
 /// Initial oil velocity v0 using the given losses (BB2E, p513, eq:15.17)
 double InitialOilVelocity(double coilLoss, double inletArea, double deltaT)
 {
-    double p = FLUID_DENSITY_OF_OIL;
+    double p = FLUID_DENSITY_OF_OIL_40;
     double c = SPECIFIC_HEAT_OF_OIL;
     
     return coilLoss / (p * c * inletArea * deltaT);
@@ -105,7 +105,7 @@ double PrandtlNumber(double fViscosity, double fSpecificHeat, double fThermalCon
 /// Convection heat transfer coefficient (BB2E, p514, eq:15.23)
 double ConvectionCoefficient(double hydraulicDiameter, double pathLength, double bulkOilTemp, double gradient, double fVelocity)
 {
-    double p = FLUID_DENSITY_OF_OIL;
+    double p = FLUID_DENSITY_OF_OIL_40;
     double k = THERMAL_CONDUCTIVITY_OF_OIL;
     double c = SPECIFIC_HEAT_OF_OIL;
     double muBulk = OilViscosity(bulkOilTemp);
@@ -121,6 +121,11 @@ double ConvectionCoefficient(double hydraulicDiameter, double pathLength, double
 double HeatTransferCoefficient(double hConv, double tInsul, double kInsul)
 {
     return hConv / (1.0 + hConv * tInsul / kInsul);
+}
+
+double OilFluidDensity_Rho(double temp)
+{
+    return FLUID_DENSITY_OF_OIL_40 * exp(-VOLUME_COEFFICIENT_OF_THERMAL_EXPANSION_OF_OIL * (temp - 40.0));
 }
 
 

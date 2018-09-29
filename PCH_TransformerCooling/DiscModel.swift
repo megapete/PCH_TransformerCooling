@@ -136,6 +136,11 @@ class DiscModel: NSObject {
         let Ac13 = (inletLocation == .inner ? self.AcInner : self.AcOuter)
         let Ac24 = (inletLocation == .inner ? self.AcOuter : self.AcInner)
         
+        if v12 < 0 || v34 < 0 || v13 < 0 || v24 < 0
+        {
+            DLog("Stop here!")
+        }
+        
         repeat {
         
             // The losses and the convection coefficient are dependent on the temperature, so we iterate until the calculated temp doesn't change by more than 0.1 degree from one iteration to the next. This is my own decision (ie: it's not in the Bluebook).
@@ -164,6 +169,10 @@ class DiscModel: NSObject {
             
             self.temperature = (loss + hAcBelow * Tbelow + hAcAbove * Tabove + hAcInner * Tinner + hAcOuter * Touter) / sumHAC
             
+            if self.temperature.isNaN
+            {
+                ALog("Got a Nan!")
+            }
         
         } while fabs(self.temperature - oldTemp) > 0.1
         

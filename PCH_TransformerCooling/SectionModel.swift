@@ -177,7 +177,7 @@ class SectionModel: NSObject {
             }
             
             // constant that turns up a lot
-            let cp = SPECIFIC_HEAT_OF_OIL * FLUID_DENSITY_OF_OIL
+            let cp = SPECIFIC_HEAT_OF_OIL * FLUID_DENSITY_OF_OIL_40
             
             var B = [Double](repeating: 0.0, count: dimension)
             
@@ -326,8 +326,6 @@ class SectionModel: NSObject {
             T[rowIndex, nodalToffset + 2*n] = A2V
             T[rowIndex, deltaToffset + 3*n] = A2V
             
-            
-            
             // T.OutputAsCSV(url: theURL)
             
             // That's it, solve the freakin' thing
@@ -336,7 +334,14 @@ class SectionModel: NSObject {
             
             for i in 1...2*n+2
             {
-                self.nodeTemps[i] = X[nodalToffset + i]
+                let nextTemp = X[nodalToffset + i]
+                
+                if nextTemp.isNaN
+                {
+                    ALog("Got a NaN at temperature index: \(i)")
+                }
+                
+                self.nodeTemps[i] = nextTemp
                 outputString.append("\(self.nodeTemps[i])\n")
             }
             

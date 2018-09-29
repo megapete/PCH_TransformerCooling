@@ -8,7 +8,8 @@
 
 import Cocoa
 
-let relaxationFactor = 0.5
+// The "amount" of the new value of v0 that should be used in each iteration
+let relaxationFactor = 0.35
 
 class CoilModel: NSObject {
     
@@ -147,7 +148,7 @@ class CoilModel: NSObject {
             
             DLog("v0: \(self.v0); oldV0: \(vOld); P0: \(self.p0) oldP0: \(Pold); TopP: \(Ptop)")
             
-            doneFlag = CoilModel.ValuesAreEqual(value1: self.v0, value2: vOld, fractionTolerance: 0.001) && CoilModel.ValuesAreEqual(value1: self.p0, value2: Pold, fractionTolerance: 0.001)
+            doneFlag = CoilModel.ValuesAreEqual(value1: self.v0, value2: vOld, fractionTolerance: 0.01) && CoilModel.ValuesAreEqual(value1: self.p0, value2: Pold, fractionTolerance: 0.01) // && fabs(Ptop) < 10.0
             
         } while !doneFlag
         
@@ -217,12 +218,12 @@ class CoilModel: NSObject {
         
         let tBotPU = tBotDimn / coilHeight
         let aveOutsideTemp = tOutsideBottom * tBotPU + (1.0 - tBotPU) * (tOutsideBottom + tOutsideTop) / 2.0
-        let aveInsideTemp = self.AverageInteriorOilTemperature()
         
         self.tBottom = tOutsideBottom
+        let aveInsideTemp = self.AverageInteriorOilTemperature()
     
         var oldP0 = self.p0
-        self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, self.Height(), aveInsideTemp - aveOutsideTemp)
+        self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL_40, self.Height(), aveInsideTemp - aveOutsideTemp)
         
         // let coilTopOilTemp = self.TopOilTemp()
         let oldV0 = self.v0
@@ -266,25 +267,16 @@ class CoilModel: NSObject {
     /// Get the average oil temperature inside the coil
     func AverageInteriorOilTemperature() -> Double
     {
-        var tempSum = 0.0
-        var numNodes = 0.0
-        
-        for nextSection in self.sections
+        guard sections.count > 0 else
         {
-            for nextNode in nextSection.nodeTemps
-            {
-                tempSum += nextNode
-            }
-            
-            numNodes += Double(nextSection.nodeTemps.count)
+            DLog("No sections have been defined!")
+            return -Double.greatestFiniteMagnitude
         }
         
-        guard numNodes > 0.0 else
-        {
-            return 0.0
-        }
+        let bottomTemp = self.tBottom
+        let tTop = self.TopOilTemp()
         
-        return tempSum / numNodes
+        return (tTop + bottomTemp) / 2.0
     }
     
     /// Get the overall loss of the coil
