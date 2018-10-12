@@ -9,7 +9,7 @@
 import Cocoa
 
 // The "amount" of the new value of v0 that should be used in each iteration
-let relaxationFactor = 0.35
+let startingRelaxationFactor = 0.35
 
 class CoilModel: NSObject {
     
@@ -71,7 +71,12 @@ class CoilModel: NSObject {
             return (-Double.greatestFiniteMagnitude, -Double.greatestFiniteMagnitude)
         }
         
-        self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight:radHeight)
+        var currentRelaxationFactor = startingRelaxationFactor
+        
+        self.p0 = 0.0
+        self.v0 = 0.0
+        
+        self.InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, relaxationFactor: currentRelaxationFactor, coolingOffset: coolingOffset, radHeight:radHeight)
         
         var coilTopTemp = tTop
         var oldCoilTopTemp = 0.0
@@ -144,11 +149,17 @@ class CoilModel: NSObject {
             
             // DLog("Loss: \(self.Loss())W; Top Oil: \(coilTopTemp); Hot Spot: \(self.HotSpot()); Pbottom: \(Pold) Ptop: \(Ptop), vBottom: \(self.v0); vTop: \(vTop)")
             
-            InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, coolingOffset: coolingOffset, radHeight: radHeight)
+            InitializeInputParameters(tOutsideBottom: tBottom, tOutsideTop: tTop, relaxationFactor: currentRelaxationFactor, coolingOffset: coolingOffset, radHeight: radHeight)
             
             DLog("v0: \(self.v0); oldV0: \(vOld); P0: \(self.p0) oldP0: \(Pold); TopP: \(Ptop)")
             
             doneFlag = CoilModel.ValuesAreEqual(value1: self.v0, value2: vOld, fractionTolerance: 0.01) && CoilModel.ValuesAreEqual(value1: self.p0, value2: Pold, fractionTolerance: 0.01) // && fabs(Ptop) < 10.0
+            
+            if doneFlag && fabs(Ptop) > 10.0
+            {
+                doneFlag = false
+                currentRelaxationFactor /= 2.0
+            }
             
         } while !doneFlag
         
@@ -187,7 +198,7 @@ class CoilModel: NSObject {
         return topSection.discs.last!.temperature
     }
     
-    func InitializeInputParameters(tOutsideBottom:Double, tOutsideTop:Double, coolingOffset: Double, radHeight: Double)
+    func InitializeInputParameters(tOutsideBottom:Double, tOutsideTop:Double, relaxationFactor:Double, coolingOffset: Double, radHeight: Double)
     {
         guard sections.count > 0 else
         {
@@ -225,19 +236,42 @@ class CoilModel: NSObject {
         var oldP0 = self.p0
         self.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL_40, self.Height(), aveInsideTemp - aveOutsideTemp)
         
+        if self.p0 <= 0.0
+        {
+            ALog("Illegal temperature difference between external and internal oil.")
+        }
+        
         // let coilTopOilTemp = self.TopOilTemp()
         let oldV0 = self.v0
-        let newV0 = InitialOilVelocity(self.Loss(), self.sections[0].discs[0].Ainner, self.TopOilTemp() - tOutsideBottom)
+        let newV0 = InitialOilVelocity(self.Loss(), inletArea, self.TopOilTemp() - tOutsideBottom)
         
         var topP = self.TopPressure()
-        if topP == nil
+        if oldP0 == 0.0
         {
             // first time through
             oldP0 = self.p0
             topP = 0.0
         }
         
-        self.v0 = relaxationFactor * newV0 + (1.0 - relaxationFactor) * (self.p0 / (oldP0 - topP!)) * oldV0
+        var pRatio = self.p0 / (oldP0 - topP!)
+        let maxPratio = 1.0
+        
+        var useRelaxationFactor = relaxationFactor
+        
+        if (pRatio < 0.0)
+        {
+            ALog("Illegal values of P")
+        }
+        else if (pRatio > maxPratio)
+        {
+            pRatio = maxPratio
+            self.p0 = pRatio * (oldP0 - topP!)
+            useRelaxationFactor /= 10.0
+        }
+        
+        DLog("P0:\(self.p0), P0,save:\(oldP0), Ptop:\(topP!); Ratio:\(pRatio)")
+        
+        self.v0 = relaxationFactor * newV0 + (1.0 - relaxationFactor) * pRatio * oldV0
     }
     
     func TopPressure() -> Double?

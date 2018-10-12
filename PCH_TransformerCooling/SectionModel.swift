@@ -430,7 +430,10 @@ class SectionModel: NSObject {
         // Initialize p1 (using pIn as P0 and vIn as v0)
         var rowIndex = pOffset + 1
         pvm[rowIndex, rowIndex] = 1.0
-        B[rowIndex] = pIn - PressureChangeUsingKandD(currentDisc.kInner, currentDisc.Dinner, OilViscosity(self.nodeTemps[0]), currentDisc.verticalPathLength, vIn)
+        
+        let kIn = (self.inletLoc == .inner ? currentDisc.kInner : currentDisc.kOuter)
+        let dIn = (self.inletLoc == .inner ? currentDisc.Dinner : currentDisc.Douter)
+        B[rowIndex] = pIn - PressureChangeUsingKandD(kIn, dIn, OilViscosity(self.nodeTemps[0]), currentDisc.verticalPathLength, vIn)
         
         // We need to be careful with filling the PV matrix. We need to remember that for an arbitrary disc i, the 2i+1 and 2i+2 nodes are the 2i and 2i-1 nodes AFTER i has been incremented. If we just blindly set the matrix row to all 4 nodes around a disc, then the numbers associated those two nodes will be clobbered by the next disc. For that reason, we only solve for P(2i) and P(2i+1) for each disc. We also note that the path 3i+2 is the 3i-1 path after incrementing i, so we won't do that one either. We WILL do the path 3i, and save the equation in THAT row. However, after doing the final disc, we DO need to solve for the final horizontal path (3n+2).
         for i in 1...n

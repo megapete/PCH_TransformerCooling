@@ -138,7 +138,7 @@ class DiscModel: NSObject {
         
         if v12 < 0 || v34 < 0 || v13 < 0 || v24 < 0
         {
-            DLog("Stop here!")
+            ALog("Stop here!")
         }
         
         repeat {

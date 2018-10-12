@@ -8,6 +8,11 @@
 
 import Foundation
 
+func RunThermalTest_01()
+{
+    
+}
+
 func RunThermalTest()
 {
     let metricConv = 25.4 / 1000.0
@@ -20,10 +25,10 @@ func RunThermalTest()
     lvBottomSection.desc = "Lowest"
     
     let tAmb = 20.0
-    let tBotRise = 10.0
-    let tAveRise = tBotRise / 0.8
+    let tBotRise = 5.0
+    let tAveRise = tBotRise / 0.75
     var tBot = tAmb + tBotRise
-    var tOutsideTop = tBot + 2.0 * (tAveRise - tBotRise)
+    let tOutsideTop = tAveRise / 0.8 + tAmb
     
     let initialDeltaTperSection = (tOutsideTop - tBot) / 3.0 + 1.0
     
@@ -44,7 +49,7 @@ func RunThermalTest()
     
     let lvCoil = CoilModel(amps: 113.6, coilID: 22.676 * metricConv, numInnerSticks: 44, numOuterSticks: 44, sections:[lvBottomSection, lvMiddleSection, lvTopSection])
     
-    let height = lvCoil.Height()
+    // let height = lvCoil.Height()
     var loss = lvCoil.Loss()
     
     let topOilDiff = 3.0
@@ -61,7 +66,7 @@ func RunThermalTest()
     {
         let topRise = result.T - topOilDiff - tAmb
         let meanRise = topRise * 0.8
-        let botRise = topRise - 2.0 * (topRise - meanRise)
+        let botRise = meanRise * 0.75
         tBot = tAmb + botRise
         
         // lvCoil.p0 = PressureChangeInCoil(FLUID_DENSITY_OF_OIL, height, topOilDiff / 2.0)
